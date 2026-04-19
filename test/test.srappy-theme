@@ -1,0 +1,16 @@
+{
+   "id": "my-cool-theme",
+   "name": "My Cool Theme",
+   "mode": "dark",
+   "config":
+   {
+     "bg": "#1a1a1a",
+     "surface": "rgba(40,40,40,0.85)",
+     "border": "#333",
+     "text": "#eee",
+      "textMuted": "#888",
+      "accent": "#ff00ff",
+      "accentText": "#000",
+      "grid": "#222"
+    }
+}

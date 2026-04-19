@@ -1,0 +1,62 @@
+[
+  {
+    "id": "6c13tq0",
+    "timestamp": 1776605147922,
+    "url": "https://rust-lang.org/ru/",
+    "pages_scraped": 1,
+    "total_chars": 3723,
+    "total_size_bytes": 22742,
+    "duration_ms": 1056,
+    "recursive": false,
+    "max_depth": 1000,
+    "avg_speed": 0
+  },
+  {
+    "id": "dvtd111",
+    "timestamp": 1776605053970,
+    "url": "https://rust-lang.org/",
+    "pages_scraped": 1,
+    "total_chars": 3191,
+    "total_size_bytes": 18602,
+    "duration_ms": 861,
+    "recursive": false,
+    "max_depth": 1000,
+    "avg_speed": 0
+  },
+  {
+    "id": "80fnae3",
+    "timestamp": 1776604721483,
+    "url": "https://rust-lang.org/",
+    "pages_scraped": 1,
+    "total_chars": 3191,
+    "total_size_bytes": 18602,
+    "duration_ms": 852,
+    "recursive": false,
+    "max_depth": 1000,
+    "avg_speed": 0
+  },
+  {
+    "id": "mw4of8x",
+    "timestamp": 1776604113268,
+    "url": "https://rust-lang.org/",
+    "pages_scraped": 1498,
+    "total_chars": 38585260,
+    "total_size_bytes": 215193824,
+    "duration_ms": 220950,
+    "recursive": true,
+    "max_depth": 1000,
+    "avg_speed": 6.585049563707496
+  },
+  {
+    "id": "22gf206",
+    "timestamp": 1776603239283,
+    "url": "https://rust-lang.org/",
+    "pages_scraped": 500,
+    "total_chars": 4905798,
+    "total_size_bytes": 27547879,
+    "duration_ms": 128140,
+    "recursive": true,
+    "max_depth": 10,
+    "avg_speed": 3.8925955048307106
+  }
+]

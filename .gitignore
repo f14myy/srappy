@@ -1,0 +1,26 @@
+# Dependency directories
+node_modules
+/src-tauri/target
+
+# Build artifacts
+/build
+/.svelte-kit
+/package
+/dist
+/bin
+/gen
+
+# Environmental variables
+.env
+.env.*
+!.env.example
+
+# Editor / System files
+.DS_Store
+Thumbs.db
+*.timestamp-*
+/.vscode
+
+# Tauri specific
+src-tauri/gen
+src-tauri/target
