@@ -21,6 +21,7 @@ export const DEFAULT_SCRAPE_OPTIONS: ScrapeOptions = {
   user_agents: "",
   use_headless_chrome: false,
   unique_domains_only: false,
+  concurrency: 5,
   excluded_tags: ["button", "input", "select", "textarea"],
 };
 
@@ -40,7 +41,7 @@ export function loadScrapeOptions(): ScrapeOptions {
 export function saveScrapeOptions(options: ScrapeOptions): void {
   if (typeof localStorage === "undefined") return;
   try {
-    // We don't want to save some transient state if there was any, 
+    // We don't want to save some transient state if there was any,
     // but ScrapeOptions is purely configuration here.
     localStorage.setItem(SCRAPE_OPTIONS_KEY, JSON.stringify(options));
   } catch {

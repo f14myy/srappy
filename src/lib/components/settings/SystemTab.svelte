@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { invoke } from "@tauri-apps/api/core";
   import type { AppPreferences } from "$lib/appPreferences";
   import type { Translations } from "$lib/i18n";
   import Toggle from "../ui/Toggle.svelte";
@@ -10,6 +11,32 @@
   };
 
   let { prefs, tx, onpatch }: Props = $props();
+
+  async function toggleStartOnBoot() {
+    const newVal = !prefs.startOnBoot;
+    try {
+      const { enable, disable, isEnabled } = await import("@tauri-apps/plugin-autostart");
+      if (newVal) {
+        await enable();
+      } else {
+        await disable();
+      }
+      onpatch({ startOnBoot: await isEnabled() });
+    } catch (e) {
+      console.error("Autostart plugin error", e);
+      onpatch({ startOnBoot: newVal }); // fallback
+    }
+  }
+
+  async function toggleCloseToTray() {
+    const newVal = !prefs.closeToTray;
+    try {
+      await invoke("set_close_to_tray", { enabled: newVal });
+      onpatch({ closeToTray: newVal });
+    } catch (e) {
+      console.error("Set close to tray error", e);
+    }
+  }
 </script>
 
 <div class="tab">
@@ -19,7 +46,7 @@
     <div class="card-row">
       <div class="info"><span class="lbl">{tx.system.startOnBoot}</span></div>
       <div class="action">
-        <Toggle on={prefs.startOnBoot} onclick={() => onpatch({ startOnBoot: !prefs.startOnBoot })} />
+        <Toggle on={prefs.startOnBoot} onclick={toggleStartOnBoot} />
       </div>
     </div>
 
@@ -29,7 +56,7 @@
         <span class="hnt">{tx.system.trayHint}</span>
       </div>
       <div class="action">
-        <Toggle on={prefs.closeToTray} onclick={() => onpatch({ closeToTray: !prefs.closeToTray })} />
+        <Toggle on={prefs.closeToTray} onclick={toggleCloseToTray} />
       </div>
     </div>
   </div>

@@ -60,7 +60,7 @@
   }
   
   .stat-card:hover .card-icon {
-    transform: scale(1.1) rotate(-5deg);
+    transform: scale(1.1);
   }
 
   .card-content {

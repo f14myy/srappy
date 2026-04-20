@@ -1,6 +1,5 @@
 use reqwest::Client;
 use scraper::Html;
-use std::cell::RefCell;
 use std::sync::Arc;
 use std::time::Instant;
 use url::Url;
@@ -9,17 +8,20 @@ use crate::error::ScrapeError;
 use crate::models::{PageResult, ScrapeOptions};
 use crate::extractor::{extract_clean_text, post_process, extract_links, normalized_registrable_host, host_matches_domain_rule};
 
-thread_local! {
-    pub static HEADLESS_BROWSER: RefCell<Option<headless_chrome::Browser>> = const { RefCell::new(None) };
-}
-
 pub async fn fetch_page(
     client: &Client,
     url: &str,
     opts: &ScrapeOptions,
+    stop_flag: Arc<std::sync::atomic::AtomicBool>,
+    active_browsers: Arc<std::sync::Mutex<std::collections::HashMap<u64, headless_chrome::Browser>>>,
+    browser_id_counter: Arc<std::sync::atomic::AtomicU64>,
 ) -> Result<(PageResult, Vec<String>), ScrapeError> {
+    if stop_flag.load(std::sync::atomic::Ordering::SeqCst) {
+        return Err(ScrapeError::Other("Stopped by user".into()));
+    }
+
     if opts.use_headless_chrome.unwrap_or(false) {
-        return fetch_page_headless(url, opts).await;
+        return fetch_page_headless(url, opts, stop_flag, active_browsers, browser_id_counter).await;
     }
 
     let start = Instant::now();
@@ -53,61 +55,68 @@ pub async fn fetch_page(
 pub async fn fetch_page_headless(
     url: &str,
     opts: &ScrapeOptions,
+    stop_flag: Arc<std::sync::atomic::AtomicBool>,
+    active_browsers: Arc<std::sync::Mutex<std::collections::HashMap<u64, headless_chrome::Browser>>>,
+    browser_id_counter: Arc<std::sync::atomic::AtomicU64>,
 ) -> Result<(PageResult, Vec<String>), ScrapeError> {
     let start = Instant::now();
     let url_string = url.to_string();
 
     let html = tokio::task::spawn_blocking(move || -> Result<String, ScrapeError> {
-        HEADLESS_BROWSER.with(|cell| -> Result<String, ScrapeError> {
-            let mut slot = cell.borrow_mut();
-            if slot.is_none() {
-                let browser = headless_chrome::Browser::new(headless_chrome::LaunchOptions {
-                    headless: true,
-                    sandbox: false,
-                    ..Default::default()
-                })
-                .map_err(|e| ScrapeError::Parse(e.to_string()))?;
-                *slot = Some(browser);
+        let b = headless_chrome::Browser::new(headless_chrome::LaunchOptions {
+            headless: true,
+            sandbox: false,
+            ..Default::default()
+        })
+        .map_err(|e| ScrapeError::Parse(e.to_string()))?;
+        
+        let id = browser_id_counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        
+        if let Ok(mut browsers) = active_browsers.lock() {
+            if stop_flag.load(std::sync::atomic::Ordering::SeqCst) {
+                return Err(ScrapeError::Other("Stopped by user".into()));
             }
-            let browser = slot
-                .as_ref()
-                .ok_or_else(|| ScrapeError::Parse("headless browser not initialized".into()))?;
-
+            browsers.insert(id, b);
+        } else {
+            return Err(ScrapeError::Other("Failed to lock browsers".into()));
+        }
+        
+        let result = (|| -> Result<String, ScrapeError> {
+            let browsers = active_browsers.lock().map_err(|_| ScrapeError::Other("Lock error".into()))?;
+            let browser = browsers.get(&id).ok_or_else(|| ScrapeError::Other("Browser was killed".into()))?;
+            
             let tab = browser.new_tab().map_err(|e| ScrapeError::Parse(e.to_string()))?;
-            tab.navigate_to(&url_string)
-                .map_err(|e| ScrapeError::Parse(e.to_string()))?;
-            tab.wait_until_navigated()
-                .map_err(|e| ScrapeError::Parse(e.to_string()))?;
-
-            for _ in 0..40 {
-                let state = tab
-                    .evaluate("document.readyState", false)
-                    .map_err(|e| ScrapeError::Parse(e.to_string()))?;
-                let ready = state
-                    .value
-                    .as_ref()
-                    .and_then(|v| v.as_str())
-                    .map(|s| s == "complete")
-                    .unwrap_or(false);
-                if ready {
+            tab.navigate_to(&url_string).map_err(|e| ScrapeError::Parse(e.to_string()))?;
+            
+            for _ in 0..200 {
+                if stop_flag.load(std::sync::atomic::Ordering::SeqCst) {
+                    return Err(ScrapeError::Other("Stopped by user".into()));
+                }
+                let state = tab.evaluate("document.readyState", false).map_err(|e| ScrapeError::Parse(e.to_string()))?;
+                if state.value.as_ref().and_then(|v| v.as_str()) == Some("complete") {
                     break;
                 }
-                std::thread::sleep(std::time::Duration::from_millis(50));
+                std::thread::sleep(std::time::Duration::from_millis(100));
             }
 
             let html_val = tab
                 .evaluate("document.documentElement.outerHTML", false)
                 .map_err(|e| ScrapeError::Parse(e.to_string()))?;
-            drop(tab);
+            
             if let Some(val) = html_val.value {
                 if let Some(s) = val.as_str() {
                     return Ok(s.to_string());
                 }
             }
-            Err(ScrapeError::Parse(
-                "Could not extract HTML from headless chrome".to_string(),
-            ))
-        })
+            Err(ScrapeError::Parse("Could not extract HTML".into()))
+        })();
+        
+        // Cleanup: remove from active browsers
+        if let Ok(mut browsers) = active_browsers.lock() {
+            browsers.remove(&id);
+        }
+        
+        result
     })
     .await
     .map_err(|e| ScrapeError::Other(e.to_string()))??;

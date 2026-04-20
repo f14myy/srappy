@@ -21,7 +21,18 @@ pub async fn scrape_url(
     let clients = build_clients(&options)?;
 
     if options.recursive {
-        crawl(app, state.stop_flag.clone(), clients, url, options, timer, None).await
+        crawl(
+            app,
+            state.stop_flag.clone(),
+            state.active_browsers.clone(),
+            state.browser_id_counter.clone(),
+            clients,
+            url,
+            options,
+            timer,
+            None,
+        )
+        .await
     } else {
         let _ = app.emit(
             "scrape-progress",
@@ -42,7 +53,15 @@ pub async fn scrape_url(
             let idx = rng.gen_range(0..clients.len());
             clients[idx].clone()
         };
-        let res = fetch_page(&client, &url, &options).await;
+        let res = fetch_page(
+            &client,
+            &url,
+            &options,
+            state.stop_flag.clone(),
+            state.active_browsers.clone(),
+            state.browser_id_counter.clone(),
+        )
+        .await;
         let elapsed = t_start.elapsed().as_millis();
         
         let (page, _) = match res {
@@ -85,6 +104,9 @@ pub async fn scrape_url(
 #[tauri::command]
 pub fn stop_scraping(state: tauri::State<'_, Arc<AppState>>) {
     state.stop_flag.store(true, Ordering::SeqCst);
+    if let Ok(mut browsers) = state.active_browsers.lock() {
+        browsers.clear();
+    }
 }
 
 #[tauri::command]
@@ -112,10 +134,11 @@ pub async fn resume_scraping(
         .map(|(u, _)| u.clone())
         .unwrap_or_default();
 
-    let stop_flag = state.stop_flag.clone();
     crawl(
         app,
-        stop_flag,
+        state.stop_flag.clone(),
+        state.active_browsers.clone(),
+        state.browser_id_counter.clone(),
         clients,
         start_url,
         options,
@@ -150,4 +173,9 @@ pub fn get_app_dir(app: tauri::AppHandle) -> Result<String, ScrapeError> {
         fs::create_dir_all(&path).map_err(|e| ScrapeError::File(e.to_string()))?;
     }
     Ok(path.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
+pub fn set_close_to_tray(state: tauri::State<'_, Arc<AppState>>, enabled: bool) {
+    state.close_to_tray.store(enabled, Ordering::SeqCst);
 }

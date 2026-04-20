@@ -4,10 +4,9 @@
   import { save, open } from "@tauri-apps/plugin-dialog";
   import { listen } from "@tauri-apps/api/event";
   import { onDestroy, onMount } from "svelte";
-  import { crossfade } from "svelte/transition";
+  import { crossfade, slide, fly } from "svelte/transition";
   import { quintOut, expoOut } from "svelte/easing";
   import { flip } from "svelte/animate";
-  import { slide } from "svelte/transition";
 
   import { loadAppPreferences, saveAppPreferences, loadWindowBounds, saveWindowBounds, type AppPreferences } from "$lib/appPreferences";
   import { loadScrapeOptions, saveScrapeOptions } from "$lib/scrapePreferences";
@@ -23,7 +22,7 @@
   import StatsScreen from "$lib/components/stats/StatsScreen.svelte";
   import { saveToHistory } from "$lib/historyStore";
 
-  const APP_VERSION = "1.0";
+  const APP_VERSION = "1.1";
 
   const [send, receive] = crossfade({
     duration: (d) => Math.sqrt(d * 200) + 150,
@@ -93,6 +92,23 @@
     document.documentElement.style.setProperty("--m-y", `${y}%`);
   }
 
+  function resolveFilename(pattern: string, url: string, ext: string): string {
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    let host = "unknown";
+    try {
+      const u = new URL(url);
+      host = u.hostname.replace(/\./g, "_");
+    } catch {
+      /* ignore */
+    }
+    // Sanitize pattern and host to avoid illegal filename characters
+    const cleanPattern = pattern.replace(/[<>:"/\\|?*]/g, "_");
+    const cleanHost = host.replace(/[<>:"/\\|?*]/g, "_");
+    
+    return cleanPattern.replace("{timestamp}", timestamp).replace("{host}", cleanHost) + "." + ext;
+  }
+
   // ─── State ───────────────────────────────────────────────────────────────────
   let prefs = $state(loadAppPreferences());
   let url = $state("");
@@ -126,6 +142,7 @@
     saveScrapeOptions(scrapeOptions);
     applyTheme(prefs.theme, prefs);
     document.documentElement.style.setProperty("--ui-scale", String(prefs.uiScale));
+    document.documentElement.style.setProperty("--grid-opacity", String(prefs.gridIntensity));
     document.documentElement.classList.toggle("reduce-motion", prefs.reduceMotion);
   });
 
@@ -218,6 +235,16 @@
           if (dir) {
             prefs = { ...prefs, lastExportDir: dir };
           }
+        }
+        
+        // Sync preferences with backend
+        await invoke("set_close_to_tray", { enabled: prefs.closeToTray });
+        
+        const { isEnabled, enable, disable } = await import("@tauri-apps/plugin-autostart");
+        const autostartEnabled = await isEnabled();
+        if (prefs.startOnBoot !== autostartEnabled) {
+          if (prefs.startOnBoot) await enable();
+          else await disable();
         }
       } catch {
         /* ignore */
@@ -320,7 +347,28 @@
       };
       saveToHistory(activeSession);
 
-      finishProgress(true);      if (activeSession) await notifyScrapeDone(activeSession.result.pages_scraped);
+      finishProgress(true);
+      if (activeSession) {
+        await notifyScrapeDone(activeSession.result.pages_scraped);
+        
+        // AUTO-SAVE SESSION
+        if (prefs.autoSaveSessions) {
+          try {
+            const dir = prefs.lastExportDir || (await invoke<string>("get_app_dir"));
+            const fname = resolveFilename(prefs.filenamePattern, url, "srappy");
+            const path = dir + "/" + fname;
+            const content = JSON.stringify({
+              url: activeSession.url,
+              options: activeSession.options,
+              state: res.crawl_state,
+              pages: res.pages,
+            }, null, 2);
+            await invoke("save_text", { text: content, path });
+          } catch (e) {
+            console.error("Auto-save failed", e);
+          }
+        }
+      }
     } catch (err) {
       errorMsg = String(err);
       finishProgress(false);
@@ -428,59 +476,61 @@
   // ─── Export ──────────────────────────────────────────────────────────────────
   type ExportFormat = "txt" | "json" | "csv" | "csv_meta" | "md" | "srappy";
 
-  async function exportData(format: ExportFormat) {
-    if (!activeSession) return;
-    const result = activeSession.result;
-    
-    let content = "";
-    let extName = "";
-    let ext = "";
-
+  function getExportContent(format: ExportFormat, session: ScrapeSession) {
+    const result = session.result;
     if (format === "txt") {
-      content = result.pages_scraped > 1 
+      return result.pages_scraped > 1 
         ? result.pages.map(p => `=== ${p.url} ===\n\n${p.text}`).join("\n\n\n")
         : result.pages[0]?.text ?? "";
-      extName = "Text Document";
-      ext = "txt";
     } else if (format === "json") {
-      content = JSON.stringify(result.pages, null, 2);
-      extName = "JSON File";
-      ext = "json";
+      return JSON.stringify(result.pages, null, 2);
     } else if (format === "csv") {
       const escape = (s: string) => `"${s.replace(/"/g, '""')}"`;
-      content = "URL,Target,LoadTimeMs,SizeBytes,Text\n";
+      let content = "URL,Target,LoadTimeMs,SizeBytes,Text\n";
       content += result.pages.map(p => {
         return `${escape(p.url)},${escape("Body")},${p.load_time_ms},${p.size_bytes},${escape(p.text)}`;
       }).join("\n");
-      extName = "CSV File";
-      ext = "csv";
+      return content;
     } else if (format === "csv_meta") {
       const escape = (s: string) => `"${s.replace(/"/g, '""')}"`;
-      content = "URL,CharCount,LoadTimeMs,SizeBytes\n";
+      let content = "URL,CharCount,LoadTimeMs,SizeBytes\n";
       content += result.pages.map(p => {
         return `${escape(p.url)},${p.char_count},${p.load_time_ms},${p.size_bytes}`;
       }).join("\n");
-      extName = "CSV (metadata)";
-      ext = "csv";
+      return content;
     } else if (format === "md") {
-      content = result.pages.map(p => `## [${p.url}](${p.url})\n\n${p.text}`).join("\n\n---\n\n");
-      extName = "Markdown File";
-      ext = "md";
+      return result.pages.map(p => `## [${p.url}](${p.url})\n\n${p.text}`).join("\n\n---\n\n");
     } else if (format === "srappy") {
-      content = JSON.stringify({
-        url,
-        options: scrapeOptions,
+      return JSON.stringify({
+        url: session.url,
+        options: session.options,
         state: result.crawl_state,
         pages: result.pages
       }, null, 2);
-      extName = "Srappy Session";
-      ext = "srappy";
     }
+    return "";
+  }
+
+  async function exportData(format: ExportFormat) {
+    if (!activeSession) return;
+    
+    const extMap: Record<ExportFormat, { name: string, ext: string }> = {
+      txt: { name: "Text Document", ext: "txt" },
+      json: { name: "JSON File", ext: "json" },
+      csv: { name: "CSV File", ext: "csv" },
+      csv_meta: { name: "CSV (metadata)", ext: "csv" },
+      md: { name: "Markdown File", ext: "md" },
+      srappy: { name: "Srappy Session", ext: "srappy" },
+    };
+
+    const { name: extName, ext } = extMap[format];
+    const content = getExportContent(format, activeSession);
 
     try {
+      const defaultFilename = resolveFilename(prefs.filenamePattern, activeSession.url, ext);
       const filePath = await save({
         filters: [{ name: extName, extensions: [ext] }],
-        defaultPath: prefs.lastExportDir || undefined,
+        defaultPath: (prefs.lastExportDir ? prefs.lastExportDir + "/" : "") + defaultFilename,
       });
       if (filePath) {
         await invoke("save_text", { text: content, path: filePath });
@@ -518,14 +568,14 @@
   <TopBar {settingsOpen} {tx} onopensettings={() => (settingsOpen = !settingsOpen)} />
 
   <div class="main-area scroll-themed" class:has-result={activeSession !== null} class:has-tabs={minimizedSessions.length > 0}>
-    <div class="flex-spacer" class:shrunk={isScraping || activeSession !== null || minimizedSessions.length > 0}></div>
+    <div class="flex-spacer" class:shrunk={isScraping || activeSession !== null}></div>
     <HeroSection
       {url}
       {isScraping}
       {progress}
       {progressLabel}
       {errorMsg}
-      compact={isScraping || activeSession !== null || minimizedSessions.length > 0}
+      compact={isScraping || activeSession !== null}
       {liveStats}
       {logs}
       recursive={scrapeOptions.recursive}
@@ -544,19 +594,26 @@
 
     {#if activeSession}
       {@const sid = activeSession.id}
-      <ResultSection
-        id={sid}
-        {send}
-        {receive}
-        result={activeSession.result}
-        recursive={activeSession.options.recursive}
-        maxDepth={activeSession.options.max_depth}
-        speed={activeSession.speed}
-        speedHistory={activeSession.speedHistory}
-        {tx}
-        onsave={(format) => exportData(format)}
-        onminimize={() => minimizeSession(activeSession!)}
-      />
+      <div 
+        class="result-container"
+        in:fly={{ y: 600, duration: 800, easing: expoOut }}
+        out:fly={{ y: 1000, duration: 700, easing: expoOut }}
+      >
+        <ResultSection
+          id={sid}
+          {send}
+          {receive}
+          result={activeSession.result}
+          recursive={activeSession.options.recursive}
+          maxDepth={activeSession.options.max_depth}
+          speed={activeSession.speed}
+          speedHistory={activeSession.speedHistory}
+          {tx}
+          defaultFormat={prefs.defaultExportFormat}
+          onsave={(format) => exportData(format)}
+          onminimize={() => minimizeSession(activeSession!)}
+        />
+      </div>
     {/if}
     <div class="flex-spacer" class:shrunk={isScraping || activeSession !== null || minimizedSessions.length > 0}></div>
   </div>
@@ -567,8 +624,8 @@
       {#each minimizedSessions as session, i (session.id)}
         <div 
           animate:flip={{ duration: 400, easing: expoOut }} 
-          in:slide={{ duration: 400, easing: expoOut }}
-          out:slide={{ duration: 400, easing: expoOut }}
+          in:fly={{ y: 200, duration: 600, easing: expoOut }}
+          out:fly={{ y: 200, duration: 400, easing: expoOut }}
           style="width: 100%; pointer-events: none;"
         >
           <SessionBar 
@@ -678,6 +735,7 @@
   .grid-bg {
     position: fixed;
     inset: 0;
+    opacity: var(--grid-opacity, 0.8);
     background-image:
       linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
       linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
@@ -710,7 +768,7 @@
   }
 
   .app:not(.modal-open) .grid-bg.interactive::after {
-    opacity: 0.8; /* Higher opacity since it's just shifting lines, not glowing */
+    opacity: var(--grid-opacity, 0.8); /* Use the preference for interactive intensity too */
   }
 
   @keyframes gridDrift {
@@ -786,5 +844,13 @@
 
   .main-area.has-tabs {
     padding-bottom: 5rem; /* Space for bars only if they exist */
+  }
+
+  .result-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
   }
 </style>

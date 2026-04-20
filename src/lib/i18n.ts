@@ -61,6 +61,7 @@ export type Translations = {
     useHeadlessChrome: string;
     tabNetwork: string;
     uniqueDomainsOnly: string;
+    concurrency: string;
     tagFilters: string;
     resetDefaults: string;
   };
@@ -174,8 +175,8 @@ export type Translations = {
     ttUserAgents: string;
     ttHeadlessChrome: string;
     ttUniqueDomains: string;
-  };
-  about: {
+    ttConcurrency: string;
+    };  about: {
     version: string;
     license: string;
   };
@@ -243,6 +244,7 @@ export const i18n: Record<Lang, Translations> = {
       useHeadlessChrome: "Use Headless Chrome (JS Render)",
       tabNetwork: "Network",
       uniqueDomainsOnly: "Only Unique Domains",
+      concurrency: "Concurrency",
       tagFilters: "Filter HTML Tags",
       resetDefaults: "Reset to Default",
     },
@@ -281,7 +283,8 @@ export const i18n: Record<Lang, Translations> = {
       saveSession: "Save Session",
       sessionSaved: "Session saved to disk",
       resumeSession: "Resume Session",
-      partialCrawlBanner: "Partial crawl: {n} page(s) saved. Export a .srappy session to resume later.",
+      partialCrawlBanner:
+        "Partial crawl: {n} page(s) saved. Export a .srappy session to resume later.",
       exportCsvMeta: "CSV (metadata only, Excel-safe)",
     },
     pref: {
@@ -339,7 +342,7 @@ export const i18n: Record<Lang, Translations> = {
       recursionOn: "Recursive",
       recursionOff: "Single Page",
       depthReached: "Depth Reached",
-      backToHistory: "Back to History"
+      backToHistory: "Back to History",
     },
     tooltips: {
       ttWhitespace: "Replaces multiple spaces and tabs with a single space.",
@@ -351,11 +354,17 @@ export const i18n: Record<Lang, Translations> = {
       ttDelay: "Wait time between sending requests to avoid getting IP blocked.",
       ttMaxDepth: "How many clicks away from the starting URL the crawler is allowed to go.",
       ttMaxPages: "Absolute limit of pages to scrape before stopping.",
-      ttTargetSelector: "Only extract text from elements matching this CSS selector (e.g. .article or #content). Leave empty to extract everything.",
-      ttProxies: "Enter proxies separated by newline (e.g. http://127.0.0.1:8080). Crawler will pick randomly.",
+      ttTargetSelector:
+        "Only extract text from elements matching this CSS selector (e.g. .article or #content). Leave empty to extract everything.",
+      ttProxies:
+        "Enter proxies separated by newline (e.g. http://127.0.0.1:8080). Crawler will pick randomly.",
       ttUserAgents: "Enter User-Agents separated by newline. Crawler will randomly rotate them.",
-      ttHeadlessChrome: "Spins up a real Chrome instance to render JavaScript pages (like React/Vue). Slower, but powerful.",
-      ttUniqueDomains: "Only visits one page per domain. Useful for broad indexing of multiple sites.",
+      ttHeadlessChrome:
+        "Spins up a real Chrome instance to render JavaScript pages (like React/Vue). Slower, but powerful.",
+      ttUniqueDomains:
+        "Only visits one page per domain. Useful for broad indexing of multiple sites.",
+      ttConcurrency:
+        "How many pages to scrape at the same time. Reduce this if using Headless Chrome to save CPU/RAM.",
     },
     about: {
       version: "Version",
@@ -423,6 +432,7 @@ export const i18n: Record<Lang, Translations> = {
       useHeadlessChrome: "Использовать Хром (JS Рендер)",
       tabNetwork: "Сеть",
       uniqueDomainsOnly: "Только уникальные домены",
+      concurrency: "Параллельные задачи",
       tagFilters: "Фильтр HTML тегов",
       resetDefaults: "Сбросить по умолчанию",
     },
@@ -461,7 +471,8 @@ export const i18n: Record<Lang, Translations> = {
       saveSession: "Сохранить сессию",
       sessionSaved: "Сессия сохранена",
       resumeSession: "Возобновить сессию",
-      partialCrawlBanner: "Частичный обход: сохранено {n} стр. Экспортируйте .srappy, чтобы продолжить.",
+      partialCrawlBanner:
+        "Частичный обход: сохранено {n} стр. Экспортируйте .srappy, чтобы продолжить.",
       exportCsvMeta: "CSV (только метаданные, для Excel)",
     },
     pref: {
@@ -519,7 +530,7 @@ export const i18n: Record<Lang, Translations> = {
       recursionOn: "Рекурсивный",
       recursionOff: "Одна страница",
       depthReached: "Глубина",
-      backToHistory: "Вернуться к истории"
+      backToHistory: "Вернуться к истории",
     },
     tooltips: {
       ttWhitespace: "Заменяет множественные пробелы и табы на один пробел.",
@@ -531,11 +542,17 @@ export const i18n: Record<Lang, Translations> = {
       ttDelay: "Время ожидания между запросами. Помогает избежать блокировок от защиты сайта.",
       ttMaxDepth: "На сколько 'кликов' вглубь от начальной страницы может уйти краулер.",
       ttMaxPages: "Жесткий лимит общего количества скачанных страниц.",
-      ttTargetSelector: "Доставать текст только из элементов, подходящих под этот CSS-селектор (например .article или #content). Оставьте пустым, чтобы парсить всё.",
-      ttProxies: "Вводите прокси с новой строки (напр. http://ip:port). Скрапер будет брать их рандомно.",
+      ttTargetSelector:
+        "Доставать текст только из элементов, подходящих под этот CSS-селектор (например .article или #content). Оставьте пустым, чтобы парсить всё.",
+      ttProxies:
+        "Вводите прокси с новой строки (напр. http://ip:port). Скрапер будет брать их рандомно.",
       ttUserAgents: "Списки User-Agent с новой строки. Скрапер будет их ротировать.",
-      ttHeadlessChrome: "Запускает реальный Chrome для страниц на React/Vue, которые не отдают текст напрямую. Сильно медленнее.",
-      ttUniqueDomains: "Посещать только одну страницу для каждого домена. Полезно для быстрого обхода множества сайтов.",
+      ttHeadlessChrome:
+        "Запускает реальный Chrome для страниц на React/Vue, которые не отдают текст напрямую. Сильно медленнее.",
+      ttUniqueDomains:
+        "Посещать только одну страницу для каждого домена. Полезно для быстрого обхода множества сайтов.",
+      ttConcurrency:
+        "Сколько страниц парсить одновременно. Уменьшите это значение при использовании Хрома, чтобы не вешать систему.",
     },
     about: {
       version: "Версия",

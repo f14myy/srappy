@@ -5,6 +5,7 @@
   } from "lucide-svelte";
   import type { ScrapeResult } from "$lib/types";
   import type { Translations } from "$lib/i18n";
+  import type { AppPreferences } from "$lib/appPreferences";
 
   type Props = {
     result: ScrapeResult;
@@ -19,6 +20,7 @@
     id: string;
     send: any;
     receive: any;
+    defaultFormat: AppPreferences["defaultExportFormat"];
     oncopy: () => void;
     onminimize: () => void;
     ontoggleview: (mode: "text" | "table") => void;
@@ -28,7 +30,7 @@
 
   let { 
     result, recursive, maxDepth, speed, speedHistory, tx, viewMode, 
-    copied, exportMenuOpen, id, send, receive,
+    copied, exportMenuOpen, id, send, receive, defaultFormat,
     oncopy, onminimize, ontoggleview, ontoggleexport, onsave
   }: Props = $props();
 
@@ -79,8 +81,6 @@
 
 <div 
   class="summary-card"
-  in:receive={{ key: id }}
-  out:send={{ key: id }}
 >
   <div class="summary-left">
     <CheckCircle size={14} class="summary-check" color="#4ade80" />
@@ -176,34 +176,38 @@
     </button>
 
     <div class="export-dropdown-wrapper" style="position: relative;">
-      <button id="save-btn" class="icon-action primary" onclick={ontoggleexport}>
-        <Download size={13} />
-        {result.pages_scraped > 1 ? tx.results.exportAll : tx.global.save}
-        <span class="save-chev" class:open={exportMenuOpen}>
-          <ChevronDown size={13} />
-        </span>
-      </button>
+      <div class="split-btn">
+        <button id="save-btn" class="icon-action primary split-left" onclick={() => onsave(defaultFormat)} title="Quick Save (.{defaultFormat.toUpperCase()})">
+          <Download size={13} />
+          {result.pages_scraped > 1 ? tx.results.exportAll : tx.global.save}
+        </button>
+        <button class="icon-action primary split-right" onclick={ontoggleexport} aria-label="Export options">
+          <span class="save-chev" class:open={exportMenuOpen}>
+            <ChevronDown size={13} />
+          </span>
+        </button>
+      </div>
       
       {#if exportMenuOpen}
         <div class="export-menu">
-          <button class="export-item" onclick={() => onsave("txt")}>
-            <span class="ext">.TXT</span> Plain Text
+          <button class="export-item" class:is-default={defaultFormat === 'txt'} onclick={() => onsave("txt")}>
+            <span class="ext">.TXT</span> Plain Text {#if defaultFormat === 'txt'}<span class="def-badge">DEF</span>{/if}
           </button>
-          <button class="export-item" onclick={() => onsave("json")}>
-            <span class="ext">.JSON</span> Structured Array
+          <button class="export-item" class:is-default={defaultFormat === 'json'} onclick={() => onsave("json")}>
+            <span class="ext">.JSON</span> Structured Array {#if defaultFormat === 'json'}<span class="def-badge">DEF</span>{/if}
           </button>
-          <button class="export-item" onclick={() => onsave("csv")}>
-            <span class="ext">.CSV</span> Spreadsheet
+          <button class="export-item" class:is-default={defaultFormat === 'csv'} onclick={() => onsave("csv")}>
+            <span class="ext">.CSV</span> Spreadsheet {#if defaultFormat === 'csv'}<span class="def-badge">DEF</span>{/if}
           </button>
-          <button class="export-item" onclick={() => onsave("csv_meta")}>
-            <span class="ext">.CSV</span> {tx.session.exportCsvMeta}
+          <button class="export-item" class:is-default={defaultFormat === 'csv_meta'} onclick={() => onsave("csv_meta")}>
+            <span class="ext">.CSV</span> {tx.session.exportCsvMeta} {#if defaultFormat === 'csv_meta'}<span class="def-badge">DEF</span>{/if}
           </button>
-          <button class="export-item" onclick={() => onsave("md")}>
-            <span class="ext">.MD</span> Markdown
+          <button class="export-item" class:is-default={defaultFormat === 'md'} onclick={() => onsave("md")}>
+            <span class="ext">.MD</span> Markdown {#if defaultFormat === 'md'}<span class="def-badge">DEF</span>{/if}
           </button>
           {#if result.crawl_state}
-            <button class="export-item" style="color: #4ade80;" onclick={() => onsave("srappy")}>
-              <span class="ext" style="color: #4ade80; background: rgba(74, 222, 128, 0.1);">.SESS</span> {tx.session.saveSession}
+            <button class="export-item" style="color: #4ade80;" class:is-default={defaultFormat === 'srappy'} onclick={() => onsave("srappy")}>
+              <span class="ext" style="color: #4ade80; background: rgba(74, 222, 128, 0.1);">.SESS</span> {tx.session.saveSession} {#if defaultFormat === 'srappy'}<span class="def-badge" style="background: #4ade80; color: #000;">DEF</span>{/if}
             </button>
           {/if}
         </div>
@@ -316,16 +320,30 @@
     opacity: 0.85;
   }
 
+  .split-btn {
+    display: flex;
+    align-items: stretch;
+  }
+
+  .split-left {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: 1px solid rgba(0,0,0,0.1) !important;
+  }
+
+  .split-right {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    padding: 0.28rem 0.35rem !important;
+  }
+
   .save-chev {
     display: inline-flex;
-    margin-left: -2px;
-    opacity: 0.75;
     transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
   }
 
   .save-chev.open {
     transform: rotate(180deg);
-    opacity: 1;
   }
 
   .view-toggles {
@@ -424,5 +442,16 @@
     border-radius: 3px;
     width: 40px;
     text-align: center;
+  }
+
+  .def-badge {
+    margin-left: auto;
+    font-size: 0.6rem;
+    font-weight: 800;
+    background: var(--accent);
+    color: var(--accent-text);
+    padding: 1px 4px;
+    border-radius: 3px;
+    opacity: 0.8;
   }
 </style>

@@ -86,15 +86,6 @@
       <button 
         type="button" 
         class="opt-btn" 
-        onclick={onresume} 
-        disabled={isScraping}
-        title={tx.session.resumeSession || "Resume Session"}
-      >
-        <FolderOpen size={15} />
-      </button>
-      <button 
-        type="button" 
-        class="opt-btn" 
         onclick={onopenstats} 
         disabled={isScraping}
         title={tx.stats.title}

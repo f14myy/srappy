@@ -27,6 +27,8 @@ pub fn dedup_queue_by_min_depth(items: Vec<(String, usize)>) -> Vec<(String, usi
 pub async fn crawl(
     app: tauri::AppHandle,
     stop_flag: Arc<AtomicBool>,
+    active_browsers: Arc<std::sync::Mutex<std::collections::HashMap<u64, headless_chrome::Browser>>>,
+    browser_id_counter: Arc<std::sync::atomic::AtomicU64>,
     clients: Arc<Vec<Client>>,
     start_url: String,
     opts: ScrapeOptions,
@@ -130,16 +132,27 @@ pub async fn crawl(
 
             let opts = opts.clone();
             let app_clone = app.clone();
+            let stop_flag_clone = stop_flag.clone();
+            let active_browsers_clone = active_browsers.clone();
+            let browser_id_counter_clone = browser_id_counter.clone();
 
             join_set.spawn(async move {
                 if let Some(delay) = opts.delay_ms {
                     if delay > 0 {
+                        // Check stop flag before delay
+                        if stop_flag_clone.load(Ordering::SeqCst) {
+                            return Err(ScrapeError::Other("Stopped".into()));
+                        }
                         tokio::time::sleep(std::time::Duration::from_millis(delay * (idx as u64))).await;
                     }
                 }
 
+                if stop_flag_clone.load(Ordering::SeqCst) {
+                    return Err(ScrapeError::Other("Stopped".into()));
+                }
+
                 let timer = std::time::Instant::now();
-                let res = fetch_page(&client, &url, &opts).await;
+                let res = fetch_page(&client, &url, &opts, stop_flag_clone, active_browsers_clone, browser_id_counter_clone).await;
                 let elapsed = timer.elapsed().as_millis();
                 
                 match res {
@@ -157,107 +170,82 @@ pub async fn crawl(
 
         let mut next_level: Vec<(String, usize)> = Vec::new();
 
-        while let Some(task_result) = join_set.join_next().await {
-            match task_result {
-                Ok(Ok(((page, links), d, url))) => {
-                    if d < max_depth {
-                        let mut new: Vec<(String, usize)> = Vec::new();
-                        for u_str in links {
-                            if visited.contains(&u_str) {
-                                continue;
-                            }
-                            if opts.unique_domains_only.unwrap_or(false) {
-                                if let Ok(u_parsed) = Url::parse(&u_str) {
-                                    if let Some(host) = u_parsed.host_str() {
-                                        let norm = normalized_registrable_host(host);
-                                        if visited_domains.contains(&norm) {
-                                            continue;
-                                        }
-                                        visited_domains.insert(norm);
+        loop {
+            if stop_flag.load(Ordering::SeqCst) {
+                join_set.abort_all();
+                is_stopped = true;
+                break 'outer;
+            }
+
+            tokio::select! {
+                task_result = join_set.join_next() => {
+                    let task_result = match task_result {
+                        Some(res) => res,
+                        None => break, // All tasks done in this level
+                    };
+
+                    match task_result {
+                        Ok(Ok(((page, links), d, url))) => {
+                            if d < max_depth {
+                                let mut new: Vec<(String, usize)> = Vec::new();
+                                for u_str in links {
+                                    if visited.contains(&u_str) {
+                                        continue;
                                     }
+                                    if opts.unique_domains_only.unwrap_or(false) {
+                                        if let Ok(u_parsed) = Url::parse(&u_str) {
+                                            if let Some(host) = u_parsed.host_str() {
+                                                let norm = normalized_registrable_host(host);
+                                                if visited_domains.contains(&norm) {
+                                                    continue;
+                                                }
+                                                visited_domains.insert(norm);
+                                            }
+                                        }
+                                    }
+                                    new.push((u_str, d + 1));
+                                }
+                                pages_found.fetch_add(new.len(), Ordering::Relaxed);
+                                next_level.extend(new);
+                            }
+                            results.push(page);
+
+                            {
+                                let mut last = last_emit.lock().unwrap();
+                                if last.elapsed() > emit_throttle {
+                                    *last = Instant::now();
+                                    let _ = app.emit(
+                                        "scrape-progress",
+                                        ProgressEvent {
+                                            current_url: url,
+                                            pages_done: results.len(),
+                                            pages_found: pages_found.load(Ordering::Relaxed),
+                                            total_pages: max_pages,
+                                            pages_failed,
+                                            depth,
+                                        },
+                                    );
                                 }
                             }
-                            new.push((u_str, d + 1));
-                        }
-                        pages_found.fetch_add(new.len(), Ordering::Relaxed);
-                        next_level.extend(new);
-                    }
-                    results.push(page);
 
-                    {
-                        let mut last = last_emit.lock().unwrap();
-                        if last.elapsed() > emit_throttle {
-                            *last = Instant::now();
-                            let _ = app.emit(
-                                "scrape-progress",
-                                ProgressEvent {
-                                    current_url: url,
-                                    pages_done: results.len(),
-                                    pages_found: pages_found.load(Ordering::Relaxed),
-                                    total_pages: max_pages,
-                                    pages_failed,
-                                    depth,
-                                },
-                            );
+                            if results.len() >= max_pages {
+                                join_set.abort_all();
+                                break 'outer;
+                            }
                         }
-                    }
-
-                    if results.len() >= max_pages {
-                        join_set.abort_all();
-                        break 'outer;
-                    }
-                }
-                Ok(Err(_)) => {
-                    pages_failed += 1;
-                    {
-                        let mut last = last_emit.lock().unwrap();
-                        if last.elapsed() > emit_throttle {
-                            *last = Instant::now();
-                            let _ = app.emit(
-                                "scrape-progress",
-                                ProgressEvent {
-                                    current_url: String::new(),
-                                    pages_done: results.len(),
-                                    pages_found: pages_found.load(Ordering::Relaxed),
-                                    total_pages: max_pages,
-                                    pages_failed,
-                                    depth,
-                                },
-                            );
+                        Ok(Err(_)) => {
+                            pages_failed += 1;
+                        }
+                        Err(e) => {
+                            if e.is_cancelled() {
+                                continue;
+                            }
+                            pages_failed += 1;
                         }
                     }
                 }
-                Err(e) => {
-                    if e.is_cancelled() {
-                        continue;
-                    }
-                    pages_failed += 1;
-                    {
-                        let mut last = last_emit.lock().unwrap();
-                        if last.elapsed() > emit_throttle {
-                            *last = Instant::now();
-                            let _ = app.emit(
-                                "scrape-progress",
-                                ProgressEvent {
-                                    current_url: String::new(),
-                                    pages_done: results.len(),
-                                    pages_found: pages_found.load(Ordering::Relaxed),
-                                    total_pages: max_pages,
-                                    pages_failed,
-                                    depth,
-                                },
-                            );
-                        }
-                    }
-                    let _ = app.emit(
-                        "scrape-log",
-                        LogEvent {
-                            url: String::new(),
-                            status: "error".into(),
-                            time_ms: 0,
-                            message: Some(format!("task error: {}", e)),
-                        },
-                    );
+                _ = tokio::time::sleep(std::time::Duration::from_millis(100)) => {
+                    // Just to loop back and check stop_flag
                 }
             }
         }

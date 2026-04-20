@@ -4,7 +4,11 @@
   import Toggle from "../../ui/Toggle.svelte";
   import Slider from "../../ui/Slider.svelte";
 
-  let { options, tx, onoptions }: { options: ScrapeOptions, tx: Translations, onoptions: (o: ScrapeOptions) => void } = $props();
+  let {
+    options,
+    tx,
+    onoptions,
+  }: { options: ScrapeOptions; tx: Translations; onoptions: (o: ScrapeOptions) => void } = $props();
 
   function toggle(key: keyof ScrapeOptions) {
     onoptions({ ...options, [key]: !options[key as keyof ScrapeOptions] });
@@ -22,7 +26,7 @@
 </label>
 
 <div style="margin-top: 0.6rem;">
-  <Slider 
+  <Slider
     label={tx.options.delayRateLimit}
     value={options.delay_ms}
     min={0}
@@ -36,7 +40,7 @@
 </div>
 
 <div class="pop-slider-group" class:disabled={!options.recursive}>
-  <Slider 
+  <Slider
     label={tx.options.maxDepth}
     value={options.max_depth}
     min={1}
@@ -46,7 +50,7 @@
     tooltip={tx.tooltips.ttMaxDepth}
   />
 
-  <Slider 
+  <Slider
     label={tx.options.maxPages}
     value={options.max_pages}
     min={1}
@@ -54,6 +58,15 @@
     disabled={!options.recursive}
     onchange={(v) => setNum("max_pages", v)}
     tooltip={tx.tooltips.ttMaxPages}
+  />
+
+  <Slider
+    label={tx.options.concurrency}
+    value={options.concurrency}
+    min={1}
+    max={options.use_headless_chrome ? 10 : 30}
+    onchange={(v) => setNum("concurrency", v)}
+    tooltip={tx.tooltips.ttConcurrency}
   />
 </div>
 
@@ -80,7 +93,9 @@
     pointer-events: none;
   }
 
-  .has-tooltip { position: relative; }
+  .has-tooltip {
+    position: relative;
+  }
   .custom-tooltip {
     display: block;
     position: absolute;
@@ -94,7 +109,7 @@
     font-size: 0.7rem;
     color: var(--text-primary);
     z-index: 100;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
     pointer-events: none;
     white-space: nowrap;
     opacity: 0;

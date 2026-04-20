@@ -1,0 +1,8 @@
+.svelte-kit
+node_modules
+build
+dist
+.tauri
+src-tauri/target
+pnpm-lock.yaml
+history.json

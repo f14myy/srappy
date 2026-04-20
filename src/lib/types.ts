@@ -41,6 +41,7 @@ export type ScrapeOptions = {
   user_agents: string;
   use_headless_chrome: boolean;
   unique_domains_only: boolean;
+  concurrency: number;
   excluded_tags: string[];
 };
 

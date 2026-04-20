@@ -80,9 +80,6 @@
 <div class="tab">
   <div class="header-row">
     <h2>{tx.pref.appearance}</h2>
-    <button class="btn-secondary small" onclick={importTheme}>
-      <Upload size={14} /> {tx.pref.importTheme}
-    </button>
   </div>
   
   <div class="card-group">
@@ -122,6 +119,11 @@
             </button>
           {/if}
         {/each}
+
+        <button type="button" class="theme-card import-card" onclick={importTheme}>
+          <div class="preview"><Upload size={16} /></div>
+          <span class="theme-name">{tx.pref.importTheme}</span>
+        </button>
       </div>
     </div>
   </div>
@@ -213,4 +215,9 @@
 
   .delete-theme { position: absolute; top: -6px; left: -6px; background: #ef4444; color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; border: none; cursor: pointer; }
   .theme-card:hover .delete-theme { opacity: 1; }
+
+  .import-card { background: rgba(128, 128, 128, 0.05); border: 1px dashed var(--border-color); color: var(--text-muted); }
+  .import-card:hover { background: rgba(128, 128, 128, 0.08); border-color: var(--text-muted); color: var(--text-primary); }
+  .import-card .preview { background: rgba(128, 128, 128, 0.05); color: var(--text-muted); }
+  .import-card:hover .preview { color: var(--accent); }
 </style>

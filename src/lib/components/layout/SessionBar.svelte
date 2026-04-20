@@ -27,8 +27,6 @@
 <div 
   class="session-bar" 
   style="--index: {index};"
-  in:receive={{ key: session.id }}
-  out:send={{ key: session.id }}
 >
   <div class="session-info">
     <Globe size={14} class="info-icon" />

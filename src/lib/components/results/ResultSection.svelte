@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ScrapeResult } from "$lib/types";
   import type { Translations } from "$lib/i18n";
+  import type { AppPreferences } from "$lib/appPreferences";
   import { FolderOutput, Search, X } from "lucide-svelte";
   
   import SummaryCard from "./SummaryCard.svelte";
@@ -19,9 +20,10 @@
     id: string;
     send: any;
     receive: any;
+    defaultFormat: AppPreferences["defaultExportFormat"];
   };
 
-  let { result, recursive, maxDepth, speed, speedHistory, tx, onsave, onminimize, id, send, receive }: Props = $props();
+  let { result, recursive, maxDepth, speed, speedHistory, tx, onsave, onminimize, id, send, receive, defaultFormat }: Props = $props();
 
   let selectedPage = $state(0);
   let viewMode = $state<"text" | "table">("text");
@@ -76,7 +78,7 @@
 
   <SummaryCard 
     {result} {recursive} {maxDepth} {speed} {speedHistory} {tx} {viewMode} 
-    {copied} {exportMenuOpen} {id} {send} {receive}
+    {copied} {exportMenuOpen} {id} {send} {receive} {defaultFormat}
     oncopy={copyText}
     onminimize={onminimize}
     ontoggleview={(m) => viewMode = m}

@@ -9,7 +9,7 @@
     <a href="README.ru.md">🇷🇺 Перейти к русской версии</a>
   </p>
 
-  <img src="https://img.shields.io/badge/Version-1.0.0-black?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.1.0-black?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/License-GPL--3.0-black?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/Build-Rust-orange?style=flat-square&logo=rust" alt="Rust">
 </div>
