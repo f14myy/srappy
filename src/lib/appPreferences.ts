@@ -1,7 +1,7 @@
 import type { Lang } from "$lib/i18n";
 import type { ThemeConfig } from "$lib/themes";
 
-const STORAGE_KEY = "srappy-app-preferences-v2"; // Bumped version for schema change
+const STORAGE_KEY = "srappy-app-preferences-v2"; // версия конфига, чтобы не было конфликтов
 const WINDOW_KEY = "srappy-window-bounds-v1";
 
 export type CustomTheme = {
@@ -14,7 +14,7 @@ export type CustomTheme = {
 export type AppPreferences = {
   theme: string;
   lang: Lang;
-  /** Multiplier for base UI (1 = 100%) */
+  // масштаб интерфейса (1 = 100%)
   uiScale: number;
   reduceMotion: boolean;
   logMaxLines: number;
@@ -22,7 +22,6 @@ export type AppPreferences = {
   rememberWindow: boolean;
   lastExportDir: string;
   interactiveGrid: boolean;
-  // NEW AUTOMATION & UI
   defaultExportFormat: "txt" | "json" | "csv" | "csv_meta" | "md" | "srappy";
   filenamePattern: string;
   autoSaveSessions: boolean;
@@ -42,7 +41,6 @@ export const DEFAULT_APP_PREFERENCES: AppPreferences = {
   rememberWindow: true,
   lastExportDir: "",
   interactiveGrid: true,
-  // DEFAULTS
   defaultExportFormat: "txt",
   filenamePattern: "{timestamp}_{host}",
   autoSaveSessions: false,
@@ -69,7 +67,7 @@ export function saveAppPreferences(p: AppPreferences): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
   } catch {
-    /* ignore quota */
+    // если падает квота сторейджа, просто молчим
   }
 }
 

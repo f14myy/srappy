@@ -49,12 +49,18 @@
     overflow: hidden;
     animation: slideDown 0.2s ease-out;
   }
-  
+
   @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-6px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  
+
   .term-header {
     background: var(--surface);
     border-bottom: 1px solid var(--border-color);
@@ -68,7 +74,7 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
-  
+
   .term-body {
     padding: 0.5rem 0.75rem;
     height: 140px;
@@ -79,16 +85,21 @@
     flex-direction: column;
     gap: 0.25rem;
   }
-  
+
   .term-line {
     display: flex;
     gap: 0.5rem;
     white-space: nowrap;
   }
-  
-  .t-status { color: #4ade80; font-weight: 600; }
-  .t-status.err { color: #f87171; }
-  
+
+  .t-status {
+    color: #4ade80;
+    font-weight: 600;
+  }
+  .t-status.err {
+    color: #f87171;
+  }
+
   .t-url {
     color: var(--text-primary);
     opacity: 0.85;
@@ -96,7 +107,7 @@
     text-overflow: ellipsis;
     flex: 1;
   }
-  
+
   .t-time {
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;

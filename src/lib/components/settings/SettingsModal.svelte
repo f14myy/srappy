@@ -15,6 +15,7 @@
   import BehaviorTab from "./BehaviorTab.svelte";
   import DataTab from "./DataTab.svelte";
   import SystemTab from "./SystemTab.svelte";
+  import LogsTab from "./LogsTab.svelte";
   import AboutTab from "./AboutTab.svelte";
 
   type Props = {
@@ -25,6 +26,8 @@
     onclose: () => void;
     onpatch: (patch: Partial<AppPreferences>) => void;
     onerror: (msg: string) => void;
+    errorLogs: any[];
+    onclearlogs?: () => void;
   };
 
   let {
@@ -35,10 +38,12 @@
     onclose,
     onpatch,
     onerror,
+    errorLogs,
+    onclearlogs,
   }: Props = $props();
 
   let activeTab = $state<
-    "appearance" | "automation" | "behavior" | "data" | "system" | "about"
+    "appearance" | "automation" | "behavior" | "data" | "system" | "logs" | "about"
   >("appearance");
 
   async function pickExportFolder() {
@@ -48,8 +53,7 @@
         multiple: false,
         title: tx.pref.defaultExportFolder,
       });
-      const path =
-        typeof dir === "string" ? dir : Array.isArray(dir) ? dir[0] : null;
+      const path = typeof dir === "string" ? dir : Array.isArray(dir) ? dir[0] : null;
       if (path) onpatch({ lastExportDir: path });
     } catch (e) {
       onerror(String(e));
@@ -112,12 +116,7 @@
       role="dialog"
       aria-modal="true"
     >
-      <SettingsSidebar
-        {activeTab}
-        {tx}
-        {appVersion}
-        onchange={(t) => (activeTab = t)}
-      />
+      <SettingsSidebar {activeTab} {tx} {appVersion} onchange={(t) => (activeTab = t)} />
 
       <main class="content-panel scroll-themed">
         <button type="button" class="close-btn" onclick={onclose}>
@@ -132,15 +131,11 @@
           {:else if activeTab === "behavior"}
             <BehaviorTab {prefs} {tx} {onpatch} />
           {:else if activeTab === "data"}
-            <DataTab
-              {prefs}
-              {tx}
-              {pickExportFolder}
-              {exportPrefsFile}
-              {importPrefsFile}
-            />
+            <DataTab {prefs} {tx} {pickExportFolder} {exportPrefsFile} {importPrefsFile} />
           {:else if activeTab === "system"}
             <SystemTab {prefs} {tx} {onpatch} />
+          {:else if activeTab === "logs"}
+            <LogsTab {tx} {errorLogs} onclear={onclearlogs} />
           {:else if activeTab === "about"}
             <AboutTab {tx} {appVersion} />
           {/if}

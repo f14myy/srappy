@@ -14,7 +14,8 @@
     onselect: (i: number) => void;
   };
 
-  let { result, tx, selectedPage, viewMode, currentPage, onprev, onnext, onselect }: Props = $props();
+  let { result, tx, selectedPage, viewMode, currentPage, onprev, onnext, onselect }: Props =
+    $props();
 
   function fmtTime(ms: number) {
     if (ms < 1000) return `${ms}ms`;
@@ -40,17 +41,18 @@
 
 {#if result.pages_scraped > 1}
   <div class="page-header">
-    {#if viewMode === 'text'}
+    {#if viewMode === "text"}
       <div class="page-nav scroll-themed">
-        <button class="nav-arrow" onclick={onprev} disabled={selectedPage <= -1} aria-label="Previous">
+        <button
+          class="nav-arrow"
+          onclick={onprev}
+          disabled={selectedPage <= -1}
+          aria-label="Previous"
+        >
           <ChevronLeft size={13} />
         </button>
 
-        <button
-          class="page-pill"
-          class:active={selectedPage === -1}
-          onclick={() => onselect(-1)}
-        >
+        <button class="page-pill" class:active={selectedPage === -1} onclick={() => onselect(-1)}>
           {tx.results.allPages}
         </button>
 
@@ -59,11 +61,16 @@
             class="page-pill page-num"
             class:active={selectedPage === i}
             onclick={() => onselect(i)}
-            title={result.pages[i].url}
-          >{i + 1}</button>
+            title={result.pages[i].url}>{i + 1}</button
+          >
         {/each}
 
-        <button class="nav-arrow" onclick={onnext} disabled={selectedPage >= result.pages.length - 1} aria-label="Next">
+        <button
+          class="nav-arrow"
+          onclick={onnext}
+          disabled={selectedPage >= result.pages.length - 1}
+          aria-label="Next"
+        >
           <ChevronRight size={13} />
         </button>
       </div>
@@ -74,7 +81,8 @@
         <Globe size={11} />
         <span class="page-url">{fmtUrl(currentPage.url)}</span>
         <span class="page-stats">
-          {fmtNum(currentPage.char_count)} {tx.results.chars}
+          {fmtNum(currentPage.char_count)}
+          {tx.results.chars}
           &nbsp;·&nbsp;
           {fmtSize(currentPage.size_bytes)}
           &nbsp;·&nbsp;
@@ -130,7 +138,10 @@
     border-color: var(--text-muted);
   }
 
-  .nav-arrow:disabled { opacity: 0.3; cursor: default; }
+  .nav-arrow:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
 
   .page-pill {
     display: flex;
@@ -150,7 +161,9 @@
     flex-shrink: 0;
   }
 
-  .page-pill.page-num { min-width: 26px; }
+  .page-pill.page-num {
+    min-width: 26px;
+  }
 
   .page-pill.active {
     background: var(--accent);
@@ -173,7 +186,9 @@
     overflow: hidden;
   }
 
-  .page-meta.muted { opacity: 0.6; }
+  .page-meta.muted {
+    opacity: 0.6;
+  }
 
   .page-url {
     font-family: ui-monospace, monospace;

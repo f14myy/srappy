@@ -1,3 +1,4 @@
+// основные типы данных приложения
 export type PageResult = {
   url: string;
   text: string;

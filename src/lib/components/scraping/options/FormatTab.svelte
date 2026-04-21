@@ -4,7 +4,11 @@
   import Toggle from "../../ui/Toggle.svelte";
   import Input from "../../ui/Input.svelte";
 
-  let { options, tx, onoptions }: { options: ScrapeOptions, tx: Translations, onoptions: (o: ScrapeOptions) => void } = $props();
+  let {
+    options,
+    tx,
+    onoptions,
+  }: { options: ScrapeOptions; tx: Translations; onoptions: (o: ScrapeOptions) => void } = $props();
 
   function toggle(key: keyof ScrapeOptions) {
     onoptions({ ...options, [key]: !options[key as keyof ScrapeOptions] });
@@ -38,10 +42,10 @@
 
 <div class="pop-slider-row has-tooltip" style="margin-top: 0;">
   <span style="font-size:0.75rem; margin-bottom:0.2rem;">{tx.options.targetSelector}</span>
-  <Input 
-    value={options.target_selector} 
-    placeholder=".article-body, #main-content" 
-    oninput={(v) => onoptions({...options, target_selector: v})} 
+  <Input
+    value={options.target_selector}
+    placeholder=".article-body, #main-content"
+    oninput={(v) => onoptions({ ...options, target_selector: v })}
   />
   <div class="custom-tooltip">{tx.tooltips.ttTargetSelector}</div>
 </div>
@@ -75,7 +79,9 @@
     width: 100%;
   }
 
-  .has-tooltip { position: relative; }
+  .has-tooltip {
+    position: relative;
+  }
   .custom-tooltip {
     display: block;
     position: absolute;
@@ -89,7 +95,7 @@
     font-size: 0.7rem;
     color: var(--text-primary);
     z-index: 100;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
     pointer-events: none;
     white-space: nowrap;
     opacity: 0;

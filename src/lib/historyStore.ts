@@ -22,23 +22,24 @@ export async function saveToHistory(session: ScrapeSession): Promise<void> {
     duration_ms: session.result.load_time_ms,
     recursive: session.options.recursive,
     max_depth: session.options.max_depth,
-    avg_speed: session.speed
+    avg_speed: session.speed,
   };
 
   const updated = [newItem, ...history].slice(0, MAX_HISTORY);
+  // кэшируем в памяти, чтобы не дергать диск постоянно
   cachedHistory = updated;
-  
+
   try {
     const path = await getHistoryPath();
     await invoke("save_text", { text: JSON.stringify(updated, null, 2), path });
   } catch (e) {
-    console.error("Failed to save history to disk", e);
+    // если не удалось сохранить историю — и бог с ней
   }
 }
 
 export async function getHistory(): Promise<ScrapeHistoryItem[]> {
   if (cachedHistory) return cachedHistory;
-  
+
   try {
     const path = await getHistoryPath();
     const raw = await invoke<string>("read_text", { path });
@@ -61,9 +62,9 @@ export async function clearHistory(): Promise<void> {
 
 export async function deleteHistoryItem(id: string): Promise<void> {
   const history = await getHistory();
-  const updated = history.filter(item => item.id !== id);
+  const updated = history.filter((item) => item.id !== id);
   cachedHistory = updated;
-  
+
   try {
     const path = await getHistoryPath();
     await invoke("save_text", { text: JSON.stringify(updated, null, 2), path });

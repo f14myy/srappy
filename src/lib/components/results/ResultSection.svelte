@@ -3,7 +3,7 @@
   import type { Translations } from "$lib/i18n";
   import type { AppPreferences } from "$lib/appPreferences";
   import { FolderOutput, Search, X } from "lucide-svelte";
-  
+
   import SummaryCard from "./SummaryCard.svelte";
   import PageHeader from "./PageHeader.svelte";
   import ResultContent from "./ResultContent.svelte";
@@ -23,7 +23,20 @@
     defaultFormat: AppPreferences["defaultExportFormat"];
   };
 
-  let { result, recursive, maxDepth, speed, speedHistory, tx, onsave, onminimize, id, send, receive, defaultFormat }: Props = $props();
+  let {
+    result,
+    recursive,
+    maxDepth,
+    speed,
+    speedHistory,
+    tx,
+    onsave,
+    onminimize,
+    id,
+    send,
+    receive,
+    defaultFormat,
+  }: Props = $props();
 
   let selectedPage = $state(0);
   let viewMode = $state<"text" | "table">("text");
@@ -31,23 +44,19 @@
   let copied = $state(false);
   let exportMenuOpen = $state(false);
 
-  // Close menu if clicked outside
+  // закрываем меню, если кликнули в любое другое место на экране
   function handleDocumentClick(e: MouseEvent) {
-    if (exportMenuOpen && !(e.target as HTMLElement).closest('.export-dropdown-wrapper')) {
+    if (exportMenuOpen && !(e.target as HTMLElement).closest(".export-dropdown-wrapper")) {
       exportMenuOpen = false;
     }
   }
 
   const currentPage = $derived(
-    selectedPage >= 0 && selectedPage < result.pages.length
-      ? result.pages[selectedPage]
-      : null
+    selectedPage >= 0 && selectedPage < result.pages.length ? result.pages[selectedPage] : null,
   );
 
   const displayText = $derived(
-    currentPage
-      ? currentPage.text
-      : result.pages.map((p) => p.text).join("\n")
+    currentPage ? currentPage.text : result.pages.map((p) => p.text).join("\n"),
   );
 
   async function copyText() {
@@ -76,42 +85,68 @@
     </div>
   {/if}
 
-  <SummaryCard 
-    {result} {recursive} {maxDepth} {speed} {speedHistory} {tx} {viewMode} 
-    {copied} {exportMenuOpen} {id} {send} {receive} {defaultFormat}
+  <SummaryCard
+    {result}
+    {recursive}
+    {maxDepth}
+    {speed}
+    {speedHistory}
+    {tx}
+    {viewMode}
+    {copied}
+    {exportMenuOpen}
+    {id}
+    {send}
+    {receive}
+    {defaultFormat}
     oncopy={copyText}
-    onminimize={onminimize}
-    ontoggleview={(m) => viewMode = m}
-    ontoggleexport={() => exportMenuOpen = !exportMenuOpen}
-    onsave={(f) => { onsave(f); exportMenuOpen = false; }}
+    {onminimize}
+    ontoggleview={(m) => (viewMode = m)}
+    ontoggleexport={() => (exportMenuOpen = !exportMenuOpen)}
+    onsave={(f) => {
+      onsave(f);
+      exportMenuOpen = false;
+    }}
   />
 
   <div class="result-body">
     <div class="search-bar">
       <div class="search-input-wrapper">
         <Search size={14} class="search-icon" />
-        <input 
-          type="text" 
-          placeholder={tx.hero.placeholder || "Search words..."} 
+        <input
+          type="text"
+          placeholder={tx.hero.placeholder || "Search words..."}
           bind:value={searchQuery}
           spellcheck={false}
         />
         {#if searchQuery}
-          <button class="clear-search" onclick={() => searchQuery = ""}>
+          <button class="clear-search" onclick={() => (searchQuery = "")}>
             <X size={14} />
           </button>
         {/if}
       </div>
     </div>
 
-    <PageHeader 
-      {result} {tx} {selectedPage} {viewMode} {currentPage}
-      onprev={prev} onnext={next} onselect={(i) => selectedPage = i}
+    <PageHeader
+      {result}
+      {tx}
+      {selectedPage}
+      {viewMode}
+      {currentPage}
+      onprev={prev}
+      onnext={next}
+      onselect={(i) => (selectedPage = i)}
     />
 
-    <ResultContent 
-      {result} {viewMode} {displayText} {searchQuery}
-      onselect={(i) => { viewMode = 'text'; selectedPage = i; }}
+    <ResultContent
+      {result}
+      {viewMode}
+      {displayText}
+      {searchQuery}
+      onselect={(i) => {
+        viewMode = "text";
+        selectedPage = i;
+      }}
     />
   </div>
 </section>
@@ -158,7 +193,7 @@
     height: 30px;
   }
 
-  .search-icon {
+  .search-input-wrapper :global(.search-icon) {
     color: var(--text-muted);
     margin-right: 0.4rem;
   }

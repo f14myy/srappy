@@ -1,4 +1,5 @@
 <script lang="ts">
+  // верхняя панель с логотипом и настройками
   import type { Translations } from "$lib/i18n";
   import { Settings, BarChart3 } from "lucide-svelte";
 
@@ -13,16 +14,22 @@
 
 <header class="topbar">
   <div class="logo">
-    <svg
-      viewBox="0 0 24 24"
-      width="16"
-      height="16"
-      fill="currentColor"
-    >
-      <path d="M6 4l8 8-8 8h4l8-8-8-8zM13 4l8 8-8 8h4l8-8-8-8z" />
+    <svg viewBox="0 0 250 250" width="18" height="18" fill="currentColor">
+      <rect x="60.9329" y="35" width="126.805" height="25.361" transform="rotate(45 60.9329 35)" />
+      <rect
+        width="126.805"
+        height="25.361"
+        transform="matrix(-0.707107 0.707107 0.707107 0.707107 132.665 107.279)"
+      />
+      <rect x="124.335" y="35" width="126.805" height="25.361" transform="rotate(45 124.335 35)" />
+      <rect
+        width="126.805"
+        height="25.361"
+        transform="matrix(-0.707107 0.707107 0.707107 0.707107 196.067 107.279)"
+      />
     </svg>
     <span>SRAPPY</span>
-    <span class="logo-badge">v1.1</span>
+    <span class="logo-badge">v1.2</span>
   </div>
 
   <nav class="nav-links">
@@ -55,8 +62,14 @@
   }
 
   @keyframes topbarIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .logo {
@@ -77,6 +90,7 @@
   .logo span {
     background: none;
     -webkit-background-clip: initial;
+    background-clip: initial;
     -webkit-text-fill-color: initial;
     color: inherit;
   }
@@ -126,7 +140,7 @@
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
-    box-shadow: 
+    box-shadow:
       0 4px 12px rgba(0, 0, 0, 0.2),
       inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   }

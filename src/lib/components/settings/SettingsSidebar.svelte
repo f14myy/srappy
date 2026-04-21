@@ -8,15 +8,11 @@
     Cpu,
     Info,
     Settings2,
+    AlertCircle,
+    History,
   } from "lucide-svelte";
 
-  type Tab =
-    | "appearance"
-    | "automation"
-    | "behavior"
-    | "data"
-    | "system"
-    | "about";
+  type Tab = "appearance" | "automation" | "behavior" | "data" | "system" | "logs" | "about";
 
   type Props = {
     activeTab: Tab;
@@ -59,11 +55,7 @@
       <Bell size={16} />
       {tx.pref.behavior}
     </button>
-    <button
-      class="nav-btn"
-      class:active={activeTab === "data"}
-      onclick={() => onchange("data")}
-    >
+    <button class="nav-btn" class:active={activeTab === "data"} onclick={() => onchange("data")}>
       <Database size={16} />
       {tx.pref.data}
     </button>
@@ -75,11 +67,11 @@
       <Cpu size={16} />
       {tx.system.title}
     </button>
-    <button
-      class="nav-btn"
-      class:active={activeTab === "about"}
-      onclick={() => onchange("about")}
-    >
+    <button class="nav-btn" class:active={activeTab === "logs"} onclick={() => onchange("logs")}>
+      <History size={16} />
+      {tx.stats.history || "Logs"}
+    </button>
+    <button class="nav-btn" class:active={activeTab === "about"} onclick={() => onchange("about")}>
       <Info size={16} />
       {tx.pref.about}
     </button>
@@ -109,7 +101,7 @@
     font-size: 0.95rem;
     color: var(--text-primary);
   }
-  .accent-icon {
+  .sidebar-header :global(.accent-icon) {
     color: var(--accent);
   }
   .nav-menu {

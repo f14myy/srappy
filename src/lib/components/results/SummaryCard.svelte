@@ -1,7 +1,17 @@
 <script lang="ts">
   import {
-    Clock, FileText, Hash, Database, Zap, Layers,
-    Download, Copy, Check, CheckCircle, X, ChevronDown
+    Clock,
+    FileText,
+    Hash,
+    Database,
+    Zap,
+    Layers,
+    Download,
+    Copy,
+    Check,
+    CheckCircle,
+    X,
+    ChevronDown,
   } from "lucide-svelte";
   import type { ScrapeResult } from "$lib/types";
   import type { Translations } from "$lib/i18n";
@@ -28,10 +38,25 @@
     onsave: (format: any) => void;
   };
 
-  let { 
-    result, recursive, maxDepth, speed, speedHistory, tx, viewMode, 
-    copied, exportMenuOpen, id, send, receive, defaultFormat,
-    oncopy, onminimize, ontoggleview, ontoggleexport, onsave
+  let {
+    result,
+    recursive,
+    maxDepth,
+    speed,
+    speedHistory,
+    tx,
+    viewMode,
+    copied,
+    exportMenuOpen,
+    id,
+    send,
+    receive,
+    defaultFormat,
+    oncopy,
+    onminimize,
+    ontoggleview,
+    ontoggleexport,
+    onsave,
   }: Props = $props();
 
   function fmtTime(ms: number) {
@@ -58,11 +83,11 @@
   }
 
   const avgChars = $derived(
-    result.pages_scraped > 0 ? Math.round(result.total_chars / result.pages_scraped) : 0
+    result.pages_scraped > 0 ? Math.round(result.total_chars / result.pages_scraped) : 0,
   );
 
   const avgTime = $derived(
-    result.pages_scraped > 0 ? Math.round(result.load_time_ms / result.pages_scraped) : 0
+    result.pages_scraped > 0 ? Math.round(result.load_time_ms / result.pages_scraped) : 0,
   );
 
   const sparklineData = $derived(() => {
@@ -73,15 +98,13 @@
     const step = w / (speedHistory.length - 1);
     let path = `M 0 ${h - (speedHistory[0] / max) * h}`;
     for (let i = 1; i < speedHistory.length; i++) {
-        path += ` L ${i * step} ${h - (speedHistory[i] / max) * h}`;
+      path += ` L ${i * step} ${h - (speedHistory[i] / max) * h}`;
     }
     return path;
   });
 </script>
 
-<div 
-  class="summary-card"
->
+<div class="summary-card">
   <div class="summary-left">
     <CheckCircle size={14} class="summary-check" color="#4ade80" />
     <span class="summary-title">{tx.results.completed}</span>
@@ -137,7 +160,14 @@
         <div class="stat-sep">·</div>
         <div class="stat-item" title="Speed history">
           <svg width="60" height="18" viewBox="0 0 60 18" preserveAspectRatio="none">
-             <path d={sparklineData()} fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path
+              d={sparklineData()}
+              fill="none"
+              stroke="var(--accent)"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
         </div>
       {/if}
@@ -155,12 +185,20 @@
   <div class="summary-actions">
     {#if result.pages_scraped > 1}
       <div class="view-toggles">
-         <button class="view-btn" class:active={viewMode === 'text'} onclick={() => ontoggleview('text')}>
-           <FileText size={12}/> Text
-         </button>
-         <button class="view-btn" class:active={viewMode === 'table'} onclick={() => ontoggleview('table')}>
-           <Database size={12}/> Table
-         </button>
+        <button
+          class="view-btn"
+          class:active={viewMode === "text"}
+          onclick={() => ontoggleview("text")}
+        >
+          <FileText size={12} /> Text
+        </button>
+        <button
+          class="view-btn"
+          class:active={viewMode === "table"}
+          onclick={() => ontoggleview("table")}
+        >
+          <Database size={12} /> Table
+        </button>
       </div>
       <div style="width: 2px;"></div>
     {/if}
@@ -177,44 +215,100 @@
 
     <div class="export-dropdown-wrapper" style="position: relative;">
       <div class="split-btn">
-        <button id="save-btn" class="icon-action primary split-left" onclick={() => onsave(defaultFormat)} title="Quick Save (.{defaultFormat.toUpperCase()})">
+        <button
+          id="save-btn"
+          class="icon-action primary split-left"
+          onclick={() => onsave(defaultFormat)}
+          title="Quick Save (.{defaultFormat.toUpperCase()})"
+        >
           <Download size={13} />
           {result.pages_scraped > 1 ? tx.results.exportAll : tx.global.save}
         </button>
-        <button class="icon-action primary split-right" onclick={ontoggleexport} aria-label="Export options">
+        <button
+          class="icon-action primary split-right"
+          onclick={ontoggleexport}
+          aria-label="Export options"
+        >
           <span class="save-chev" class:open={exportMenuOpen}>
             <ChevronDown size={13} />
           </span>
         </button>
       </div>
-      
+
       {#if exportMenuOpen}
         <div class="export-menu">
-          <button class="export-item" class:is-default={defaultFormat === 'txt'} onclick={() => onsave("txt")}>
-            <span class="ext">.TXT</span> Plain Text {#if defaultFormat === 'txt'}<span class="def-badge">DEF</span>{/if}
+          <button
+            class="export-item"
+            class:is-default={defaultFormat === "txt"}
+            onclick={() => onsave("txt")}
+          >
+            <span class="ext">.TXT</span> Plain Text {#if defaultFormat === "txt"}<span
+                class="def-badge">DEF</span
+              >{/if}
           </button>
-          <button class="export-item" class:is-default={defaultFormat === 'json'} onclick={() => onsave("json")}>
-            <span class="ext">.JSON</span> Structured Array {#if defaultFormat === 'json'}<span class="def-badge">DEF</span>{/if}
+          <button
+            class="export-item"
+            class:is-default={defaultFormat === "json"}
+            onclick={() => onsave("json")}
+          >
+            <span class="ext">.JSON</span> Structured Array {#if defaultFormat === "json"}<span
+                class="def-badge">DEF</span
+              >{/if}
           </button>
-          <button class="export-item" class:is-default={defaultFormat === 'csv'} onclick={() => onsave("csv")}>
-            <span class="ext">.CSV</span> Spreadsheet {#if defaultFormat === 'csv'}<span class="def-badge">DEF</span>{/if}
+          <button
+            class="export-item"
+            class:is-default={defaultFormat === "csv"}
+            onclick={() => onsave("csv")}
+          >
+            <span class="ext">.CSV</span> Spreadsheet {#if defaultFormat === "csv"}<span
+                class="def-badge">DEF</span
+              >{/if}
           </button>
-          <button class="export-item" class:is-default={defaultFormat === 'csv_meta'} onclick={() => onsave("csv_meta")}>
-            <span class="ext">.CSV</span> {tx.session.exportCsvMeta} {#if defaultFormat === 'csv_meta'}<span class="def-badge">DEF</span>{/if}
+          <button
+            class="export-item"
+            class:is-default={defaultFormat === "csv_meta"}
+            onclick={() => onsave("csv_meta")}
+          >
+            <span class="ext">.CSV</span>
+            {tx.session.exportCsvMeta}
+            {#if defaultFormat === "csv_meta"}<span class="def-badge">DEF</span>{/if}
           </button>
-          <button class="export-item" class:is-default={defaultFormat === 'md'} onclick={() => onsave("md")}>
-            <span class="ext">.MD</span> Markdown {#if defaultFormat === 'md'}<span class="def-badge">DEF</span>{/if}
+          <button
+            class="export-item"
+            class:is-default={defaultFormat === "md"}
+            onclick={() => onsave("md")}
+          >
+            <span class="ext">.MD</span> Markdown {#if defaultFormat === "md"}<span
+                class="def-badge">DEF</span
+              >{/if}
           </button>
           {#if result.crawl_state}
-            <button class="export-item" style="color: #4ade80;" class:is-default={defaultFormat === 'srappy'} onclick={() => onsave("srappy")}>
-              <span class="ext" style="color: #4ade80; background: rgba(74, 222, 128, 0.1);">.SESS</span> {tx.session.saveSession} {#if defaultFormat === 'srappy'}<span class="def-badge" style="background: #4ade80; color: #000;">DEF</span>{/if}
+            <button
+              class="export-item"
+              style="color: #4ade80;"
+              class:is-default={defaultFormat === "srappy"}
+              onclick={() => onsave("srappy")}
+            >
+              <span class="ext" style="color: #4ade80; background: rgba(74, 222, 128, 0.1);"
+                >.SESS</span
+              >
+              {tx.session.saveSession}
+              {#if defaultFormat === "srappy"}<span
+                  class="def-badge"
+                  style="background: #4ade80; color: #000;">DEF</span
+                >{/if}
             </button>
           {/if}
         </div>
       {/if}
     </div>
-    
-    <button class="icon-action" onclick={onminimize} title="Minimize to bar" aria-label="Minimize results">
+
+    <button
+      class="icon-action"
+      onclick={onminimize}
+      title="Minimize to bar"
+      aria-label="Minimize results"
+    >
       <X size={14} />
     </button>
   </div>
@@ -269,9 +363,16 @@
     white-space: nowrap;
   }
 
-  .stat-item.accent { color: var(--accent); }
-  .stat-item.muted  { color: var(--text-muted); opacity: 0.7; }
-  .stat-item.warn { color: #fbbf24; }
+  .stat-item.accent {
+    color: var(--accent);
+  }
+  .stat-item.muted {
+    color: var(--text-muted);
+    opacity: 0.7;
+  }
+  .stat-item.warn {
+    color: #fbbf24;
+  }
 
   .stat-sep {
     font-size: 0.72rem;
@@ -307,7 +408,7 @@
   .icon-action:hover {
     border-color: var(--text-muted);
     color: var(--text-primary);
-    background: rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.04);
   }
 
   .icon-action.primary {
@@ -328,7 +429,7 @@
   .split-left {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
-    border-right: 1px solid rgba(0,0,0,0.1) !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
   }
 
   .split-right {
@@ -339,7 +440,9 @@
 
   .save-chev {
     display: inline-flex;
-    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
+    transition:
+      transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity 0.2s;
   }
 
   .save-chev.open {
@@ -350,11 +453,11 @@
     display: flex;
     align-items: center;
     gap: 0.3rem;
-    background: rgba(0,0,0,0.2);
+    background: rgba(0, 0, 0, 0.2);
     border-radius: 6px;
     padding: 2px;
   }
-  
+
   .view-btn {
     display: flex;
     align-items: center;
@@ -370,12 +473,12 @@
     transition: all 0.15s;
     font-family: inherit;
   }
-  
+
   .view-btn.active {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
   }
-  
+
   .view-btn:hover:not(.active) {
     color: var(--text-primary);
   }
@@ -391,7 +494,7 @@
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 0.35rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
     z-index: 9999;
     display: flex;
     flex-direction: column;
@@ -429,7 +532,7 @@
   }
 
   .export-item:hover {
-    background: rgba(255,255,255,0.06);
+    background: rgba(255, 255, 255, 0.06);
   }
 
   .export-item .ext {
@@ -437,7 +540,7 @@
     font-family: monospace;
     font-weight: 700;
     color: var(--accent);
-    background: rgba(0,0,0,0.2);
+    background: rgba(0, 0, 0, 0.2);
     padding: 0.1rem 0.3rem;
     border-radius: 3px;
     width: 40px;

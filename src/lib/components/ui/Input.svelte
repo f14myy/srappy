@@ -12,21 +12,21 @@
 </script>
 
 {#if type === "text"}
-  <input 
-    {type} 
-    class="list-in" 
-    {placeholder} 
-    {value} 
-    oninput={(e) => oninput((e.target as HTMLInputElement).value)} 
+  <input
+    {type}
+    class="list-in"
+    {placeholder}
+    {value}
+    oninput={(e) => oninput((e.target as HTMLInputElement).value)}
     {disabled}
     {style}
   />
 {:else}
-  <textarea 
-    class="list-in" 
-    {placeholder} 
-    {value} 
-    oninput={(e) => oninput((e.target as HTMLTextAreaElement).value)} 
+  <textarea
+    class="list-in"
+    {placeholder}
+    {value}
+    oninput={(e) => oninput((e.target as HTMLTextAreaElement).value)}
     {disabled}
     {style}
   ></textarea>
@@ -35,7 +35,7 @@
 <style>
   .list-in {
     width: 100%;
-    background: rgba(0,0,0,0.2);
+    background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--border-color);
     border-radius: 6px;
     color: var(--text-primary);

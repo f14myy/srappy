@@ -34,7 +34,9 @@ pub struct CrawlState {
 pub struct AppState {
     pub stop_flag: Arc<AtomicBool>,
     pub close_to_tray: Arc<AtomicBool>,
-    pub active_browsers: Arc<std::sync::Mutex<std::collections::HashMap<u64, headless_chrome::Browser>>>,
+    // храним открытые инстансы браузеров, чтобы можно было прибить их при остановке
+    pub active_browsers:
+        Arc<std::sync::Mutex<std::collections::HashMap<u64, headless_chrome::Browser>>>,
     pub browser_id_counter: Arc<std::sync::atomic::AtomicU64>,
 }
 

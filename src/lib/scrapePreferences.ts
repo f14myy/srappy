@@ -31,7 +31,7 @@ export function loadScrapeOptions(): ScrapeOptions {
     const raw = localStorage.getItem(SCRAPE_OPTIONS_KEY);
     if (!raw) return { ...DEFAULT_SCRAPE_OPTIONS };
     const parsed = JSON.parse(raw) as Partial<ScrapeOptions>;
-    // Merge with defaults to ensure all fields (including new ones) exist
+    // склеиваем с дефолтами, чтобы новые поля не терялись
     return { ...DEFAULT_SCRAPE_OPTIONS, ...parsed };
   } catch {
     return { ...DEFAULT_SCRAPE_OPTIONS };
@@ -45,6 +45,6 @@ export function saveScrapeOptions(options: ScrapeOptions): void {
     // but ScrapeOptions is purely configuration here.
     localStorage.setItem(SCRAPE_OPTIONS_KEY, JSON.stringify(options));
   } catch {
-    /* ignore */
+    // игнорим ошибки записи
   }
 }

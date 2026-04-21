@@ -1,6 +1,15 @@
 <script lang="ts">
   import type { Translations } from "$lib/i18n";
-  import { History, FileText, Hash, Database, Zap, Globe, CheckCircle2, Clock } from "lucide-svelte";
+  import {
+    History,
+    FileText,
+    Hash,
+    Database,
+    Zap,
+    Globe,
+    CheckCircle2,
+    Clock,
+  } from "lucide-svelte";
   import StatCard from "./StatCard.svelte";
 
   type Props = {
@@ -41,47 +50,19 @@
 </script>
 
 <section class="overview-grid">
-  <StatCard 
-    title={tx.stats.totalScrapings} 
-    value={stats.total} 
-    icon={History} 
+  <StatCard title={tx.stats.totalScrapings} value={stats.total} icon={History} />
+  <StatCard title={tx.stats.totalPages} value={fmtNum(stats.pages)} icon={FileText} />
+  <StatCard title={tx.stats.totalChars} value={fmtNum(stats.chars)} icon={Hash} />
+  <StatCard title={tx.stats.totalBytes} value={fmtSize(stats.data)} icon={Database} />
+
+  <StatCard title={tx.stats.avgSpeed} value={`${stats.avgSpeed.toFixed(1)} p/s`} icon={Zap} />
+  <StatCard
+    title={tx.stats.successRate}
+    value={`${stats.successRate.toFixed(0)}%`}
+    icon={CheckCircle2}
   />
-  <StatCard 
-    title={tx.stats.totalPages} 
-    value={fmtNum(stats.pages)} 
-    icon={FileText} 
-  />
-  <StatCard 
-    title={tx.stats.totalChars} 
-    value={fmtNum(stats.chars)} 
-    icon={Hash} 
-  />
-  <StatCard 
-    title={tx.stats.totalBytes} 
-    value={fmtSize(stats.data)} 
-    icon={Database} 
-  />
-  
-  <StatCard 
-    title={tx.stats.avgSpeed} 
-    value={`${stats.avgSpeed.toFixed(1)} p/s`} 
-    icon={Zap} 
-  />
-  <StatCard 
-    title={tx.stats.successRate} 
-    value={`${stats.successRate.toFixed(0)}%`} 
-    icon={CheckCircle2} 
-  />
-  <StatCard 
-    title={tx.stats.timeSpent} 
-    value={fmtDuration(stats.duration)} 
-    icon={Clock} 
-  />
-  <StatCard 
-    title={tx.stats.topDomain} 
-    value={stats.topDomain} 
-    icon={Globe} 
-  />
+  <StatCard title={tx.stats.timeSpent} value={fmtDuration(stats.duration)} icon={Clock} />
+  <StatCard title={tx.stats.topDomain} value={stats.topDomain} icon={Globe} />
 </section>
 
 <style>

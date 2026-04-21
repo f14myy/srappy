@@ -9,7 +9,7 @@
     <a href="README.ru.md">🇷🇺 Перейти к русской версии</a>
   </p>
 
-  <img src="https://img.shields.io/badge/Version-1.1.0-black?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.2.0-black?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/License-GPL--3.0-black?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/Build-Rust-orange?style=flat-square&logo=rust" alt="Rust">
 </div>
@@ -25,16 +25,21 @@ The application is primarily focused on creating high-quality datasets for machi
 ## Core Capabilities
 
 ### Clean Extraction Engine
+
 Srappy doesn't just "grab" HTML. It uses a recursive tree-walking algorithm to identify and isolate content blocks while stripping away interactive elements, advertisements, and navigation noise. You get the text as it was meant to be read, not as it was coded.
 
 ### Recursive Crawling
+
 Built-in support for deep-level scraping. Define your starting point and max depth; the engine will automatically map and follow internal links, respecting domain boundaries and user-defined filters.
 
 ### Modern Web Support
+
 While the core engine is extremely fast via raw HTTP requests, some modern sites require JavaScript execution to reveal their content. Srappy includes an optional Headless Chrome integration to handle React, Vue, and Angular applications seamlessly.
 
 ### Defensive Scraping
+
 To prevent IP blocks and maintain access, Srappy supports:
+
 - Staggered request delays (cascading timers).
 - Automatic User-Agent rotation.
 - Proxy pool management with random selection.
@@ -64,4 +69,5 @@ Every scraping session is more than just a download; it's a data event. Srappy p
 Srappy is released under the **GNU General Public License v3.0**. See the LICENSE file for details.
 
 ---
+
 Developed by **f14my**

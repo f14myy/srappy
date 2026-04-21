@@ -41,7 +41,7 @@
 
 <div class="tab">
   <h2>{tx.system.title}</h2>
-  
+
   <div class="card-group">
     <div class="card-row">
       <div class="info"><span class="lbl">{tx.system.startOnBoot}</span></div>
@@ -63,15 +63,57 @@
 </div>
 
 <style>
-  .tab { display: flex; flex-direction: column; gap: 2rem; }
-  .tab h2 { font-size: 1.5rem; font-weight: 800; margin: 0 0 0.5rem 0; color: var(--text-primary); letter-spacing: -0.02em; }
-  
-  .card-group { background: rgba(128, 128, 128, 0.02); border: 1px solid var(--border-color); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
-  .card-row { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); gap: 2rem; }
-  .card-row:last-child { border-bottom: none; }
+  .tab {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  .tab h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
 
-  .info { display: flex; flex-direction: column; gap: 0.25rem; }
-  .lbl { font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
-  .hnt { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; }
-  .action { display: flex; align-items: center; justify-content: flex-end; }
+  .card-group {
+    background: rgba(128, 128, 128, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .card-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    gap: 2rem;
+  }
+  .card-row:last-child {
+    border-bottom: none;
+  }
+
+  .info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .lbl {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+  }
+  .hnt {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+  .action {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
 </style>

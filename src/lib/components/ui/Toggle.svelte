@@ -1,11 +1,15 @@
 <script lang="ts">
-  let { on, onclick, disabled = false }: { on: boolean, onclick: () => void, disabled?: boolean } = $props();
+  let {
+    on,
+    onclick,
+    disabled = false,
+  }: { on: boolean; onclick: () => void; disabled?: boolean } = $props();
 </script>
 
-<button 
-  type="button" 
-  class="toggle-switch" 
-  class:on 
+<button
+  type="button"
+  class="toggle-switch"
+  class:on
   class:disabled
   {disabled}
   {onclick}
@@ -23,7 +27,7 @@
     position: relative;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
   }
 
@@ -37,12 +41,14 @@
     background: #fff;
     border-radius: 50%;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 
-  .toggle-switch.on { background: var(--accent); }
-  .toggle-switch.on::after { 
-    transform: translateX(16px); 
+  .toggle-switch.on {
+    background: var(--accent);
+  }
+  .toggle-switch.on::after {
+    transform: translateX(16px);
     background: var(--accent-text);
   }
 

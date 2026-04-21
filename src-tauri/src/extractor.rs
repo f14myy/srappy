@@ -1,31 +1,66 @@
+use crate::models::ScrapeOptions;
 use scraper::{Html, Selector};
 use url::Url;
-use crate::models::ScrapeOptions;
 
 const BLOCK_TAGS: &[&str] = &[
-    "p", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "pre", "br", "hr",
-    "div", "section", "article", "header", "footer", "aside", "nav", "main",
-    "li", "tr", "td", "dt", "dd", "address", "figure", "figcaption",
-    "table", "thead", "tbody", "tfoot", "ul", "ol", "dl", "details", "summary",
-    "form", "fieldset", "legend", "label", "caption", "center",
+    "p",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "blockquote",
+    "pre",
+    "br",
+    "hr",
+    "div",
+    "section",
+    "article",
+    "header",
+    "footer",
+    "aside",
+    "nav",
+    "main",
+    "li",
+    "tr",
+    "td",
+    "dt",
+    "dd",
+    "address",
+    "figure",
+    "figcaption",
+    "table",
+    "thead",
+    "tbody",
+    "tfoot",
+    "ul",
+    "ol",
+    "dl",
+    "details",
+    "summary",
+    "form",
+    "fieldset",
+    "legend",
+    "label",
+    "caption",
+    "center",
 ];
 
-const IGNORE_TAGS: &[&str] = &[
-    "script", "style", "noscript", "svg", "head", "meta", "link",
-];
+const IGNORE_TAGS: &[&str] = &["script", "style", "noscript", "svg", "head", "meta", "link"];
 
 pub fn extract_clean_text(node: scraper::ElementRef<'_>, user_excluded: &[String]) -> String {
     let mut text = String::new();
-    
+
     for child in node.children() {
         if let Some(el) = child.value().as_element() {
             let tag = el.name();
-            
-            // Skip hidden, interactive or user-excluded tags
+
+            // пропускаем мусорные теги и то, что юзер попросил исключить
             if IGNORE_TAGS.contains(&tag) || user_excluded.iter().any(|t| t == tag) {
                 continue;
             }
-            
+
             if let Some(el_ref) = scraper::ElementRef::wrap(child) {
                 let inner = extract_clean_text(el_ref, user_excluded);
                 if !inner.is_empty() {
@@ -34,7 +69,7 @@ pub fn extract_clean_text(node: scraper::ElementRef<'_>, user_excluded: &[String
                         text.push_str(inner.trim());
                         text.push('\n');
                     } else {
-                        // For inline elements (span, b, a), just ensure a space
+                        // для строчных элементов просто следим за пробелами
                         if !text.ends_with(' ') && !text.ends_with('\n') {
                             text.push(' ');
                         }
@@ -45,7 +80,7 @@ pub fn extract_clean_text(node: scraper::ElementRef<'_>, user_excluded: &[String
         } else if let Some(t) = child.value().as_text() {
             let content = t.trim();
             if !content.is_empty() {
-                // Check if we need a leading space to avoid merging words
+                // добавляем пробел, чтобы слова не слипались
                 if !text.is_empty() && !text.ends_with(' ') && !text.ends_with('\n') {
                     text.push(' ');
                 }
@@ -57,7 +92,6 @@ pub fn extract_clean_text(node: scraper::ElementRef<'_>, user_excluded: &[String
 }
 
 pub fn post_process(raw: String, opts: &ScrapeOptions) -> String {
-    // Collapse blank lines
     let mut text: String = raw
         .lines()
         .map(|l| l.trim())
@@ -72,7 +106,7 @@ pub fn post_process(raw: String, opts: &ScrapeOptions) -> String {
         text = text.chars().filter(|c| !c.is_ascii_digit()).collect();
     }
     if opts.remove_special_chars {
-        // Keep letters (all scripts), digits (unless removed above), and whitespace
+        // оставляем только буквы и пробелы
         text = text
             .chars()
             .filter(|c| c.is_alphabetic() || c.is_whitespace())
@@ -94,6 +128,7 @@ pub fn extract_links(document: &Html, base: &Url) -> Vec<String> {
         .filter_map(|href| base.join(href).ok())
         .filter(|u| u.scheme() == "http" || u.scheme() == "https")
         .map(|mut u| {
+            // убираем якоря (#foo), они нам не нужны для краулинга
             u.set_fragment(None);
             u.to_string()
         })

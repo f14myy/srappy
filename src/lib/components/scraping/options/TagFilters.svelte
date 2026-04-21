@@ -2,18 +2,45 @@
   import type { ScrapeOptions } from "$lib/types";
   import type { Translations } from "$lib/i18n";
 
-  let { options, tx, onoptions }: { options: ScrapeOptions, tx: Translations, onoptions: (o: ScrapeOptions) => void } = $props();
+  let {
+    options,
+    tx,
+    onoptions,
+  }: { options: ScrapeOptions; tx: Translations; onoptions: (o: ScrapeOptions) => void } = $props();
 
   const COMMON_TAGS = [
-    "div", "p", "span", "section", "article", "header", "footer", "aside", "nav",
-    "main", "h1", "h2", "h3", "li", "ul", "table", "a", "pre", "blockquote", "form", 
-    "input", "button", "details", "summary", "fieldset", "label"
+    "div",
+    "p",
+    "span",
+    "section",
+    "article",
+    "header",
+    "footer",
+    "aside",
+    "nav",
+    "main",
+    "h1",
+    "h2",
+    "h3",
+    "li",
+    "ul",
+    "table",
+    "a",
+    "pre",
+    "blockquote",
+    "form",
+    "input",
+    "button",
+    "details",
+    "summary",
+    "fieldset",
+    "label",
   ];
 
   function toggleTag(tag: string) {
     let next = [...(options.excluded_tags || [])];
     if (next.includes(tag)) {
-      next = next.filter(t => t !== tag);
+      next = next.filter((t) => t !== tag);
     } else {
       next.push(tag);
     }
@@ -28,13 +55,15 @@
 <div class="tags-filter-section">
   <div class="tags-header">
     <span class="tags-title">{tx.options.tagFilters || "Excluded Tags"}</span>
-    <button type="button" class="reset-link" onclick={resetTags}>{tx.options.resetDefaults || "Reset"}</button>
+    <button type="button" class="reset-link" onclick={resetTags}
+      >{tx.options.resetDefaults || "Reset"}</button
+    >
   </div>
   <div class="tags-grid">
     {#each COMMON_TAGS as tag}
-      <button 
-        type="button" 
-        class="tag-btn" 
+      <button
+        type="button"
+        class="tag-btn"
         class:excluded={options.excluded_tags.includes(tag)}
         onclick={() => toggleTag(tag)}
       >
@@ -53,15 +82,15 @@
   }
 
   .tags-header {
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 0.4rem;
   }
 
   .tags-title {
-    font-size: 0.75rem; 
-    font-weight: 600; 
+    font-size: 0.75rem;
+    font-weight: 600;
     color: var(--text-muted);
   }
 

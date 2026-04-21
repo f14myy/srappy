@@ -8,7 +8,11 @@
   import FiltersTab from "./FiltersTab.svelte";
   import NetworkTab from "./NetworkTab.svelte";
 
-  let { options, tx, onoptions }: { options: ScrapeOptions, tx: Translations, onoptions: (o: ScrapeOptions) => void } = $props();
+  let {
+    options,
+    tx,
+    onoptions,
+  }: { options: ScrapeOptions; tx: Translations; onoptions: (o: ScrapeOptions) => void } = $props();
 
   let popTab = $state<"format" | "crawler" | "filters" | "network">("format");
 
@@ -16,7 +20,7 @@
     { value: "format", label: tx.options.tabFormat, icon: FileText },
     { value: "crawler", label: tx.options.tabCrawler, icon: Network },
     { value: "filters", label: tx.options.tabFilters, icon: Filter },
-    { value: "network", label: tx.options.tabNetwork, icon: Zap }
+    { value: "network", label: tx.options.tabNetwork, icon: Zap },
   ]);
 </script>
 
@@ -25,20 +29,20 @@
 <div class="options-popover">
   <div class="pop-header-row">
     <div class="pop-header">{tx.options.scrapingOptions}</div>
-    <SegmentControl 
-      options={tabOptions.map(t => ({ value: t.value as any, label: t.label, icon: t.icon }))} 
-      active={popTab} 
-      onchange={(v) => popTab = v as any} 
+    <SegmentControl
+      options={tabOptions.map((t) => ({ value: t.value as any, label: t.label, icon: t.icon }))}
+      active={popTab}
+      onchange={(v) => (popTab = v as any)}
     />
   </div>
 
-  {#if popTab === 'format'}
+  {#if popTab === "format"}
     <FormatTab {options} {tx} {onoptions} />
-  {:else if popTab === 'crawler'}
+  {:else if popTab === "crawler"}
     <CrawlerTab {options} {tx} {onoptions} />
-  {:else if popTab === 'filters'}
+  {:else if popTab === "filters"}
     <FiltersTab {options} {tx} {onoptions} />
-  {:else if popTab === 'network'}
+  {:else if popTab === "network"}
     <NetworkTab {options} {tx} {onoptions} />
   {/if}
 </div>

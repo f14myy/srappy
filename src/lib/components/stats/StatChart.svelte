@@ -7,7 +7,13 @@
     formatter?: (v: number) => string;
   };
 
-  let { data, labels, title, color = "var(--accent)", formatter = (v) => v.toString() }: Props = $props();
+  let {
+    data,
+    labels,
+    title,
+    color = "var(--accent)",
+    formatter = (v) => v.toString(),
+  }: Props = $props();
 
   const width = 500;
   const height = 220;
@@ -18,15 +24,15 @@
     data.map((v, i) => ({
       x: padding + (i * (width - padding * 2)) / Math.max(data.length - 1, 1),
       y: height - padding - (v * (height - padding * 2)) / maxValue,
-      value: v
-    }))
+      value: v,
+    })),
   );
 
   // Smoothing logic (simple Bézier)
   const pathData = $derived(() => {
     if (points.length === 0) return "";
     if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
-    
+
     let d = `M ${points[0].x} ${points[0].y}`;
     for (let i = 0; i < points.length - 1; i++) {
       const curr = points[i];
@@ -38,12 +44,12 @@
   });
 
   const areaData = $derived(
-    points.length > 0 
-      ? `${pathData()} L ${points[points.length-1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`
-      : ""
+    points.length > 0
+      ? `${pathData()} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`
+      : "",
   );
 
-  let hoveredPoint = $state<{x: number, y: number, value: number} | null>(null);
+  let hoveredPoint = $state<{ x: number; y: number; value: number } | null>(null);
 </script>
 
 <div class="chart-container">
@@ -61,39 +67,66 @@
           <stop offset="100%" stop-color={color} stop-opacity="0" />
         </linearGradient>
       </defs>
-      
+
       <!-- Grid lines -->
       {#each [0, 0.25, 0.5, 0.75, 1] as tick}
         {@const y = padding + tick * (height - padding * 2)}
-        <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="var(--border-color)" stroke-width="1" opacity="0.3" stroke-dasharray="4 4" />
-        <text x={padding - 5} y={y + 4} text-anchor="end" font-size="10" fill="var(--text-muted)" opacity="0.5">
+        <line
+          x1={padding}
+          y1={y}
+          x2={width - padding}
+          y2={y}
+          stroke="var(--border-color)"
+          stroke-width="1"
+          opacity="0.3"
+          stroke-dasharray="4 4"
+        />
+        <text
+          x={padding - 5}
+          y={y + 4}
+          text-anchor="end"
+          font-size="10"
+          fill="var(--text-muted)"
+          opacity="0.5"
+        >
           {formatter(maxValue * (1 - tick))}
         </text>
       {/each}
 
       <!-- Area -->
       <path d={areaData} fill="url(#grad-{title.replace(/\s+/g, '')})" />
-      
+
       <!-- Path -->
-      <path d={pathData()} fill="none" stroke={color} stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path
+        d={pathData()}
+        fill="none"
+        stroke={color}
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
 
       <!-- Interactive layer -->
       {#each points as p, i}
         <!-- Invisible hover target -->
-        <circle 
-          cx={p.x} cy={p.y} r="12" 
-          fill="transparent" 
+        <circle
+          cx={p.x}
+          cy={p.y}
+          r="12"
+          fill="transparent"
           class="hover-target"
-          onmouseenter={() => hoveredPoint = p}
-          onmouseleave={() => hoveredPoint = null}
+          onmouseenter={() => (hoveredPoint = p)}
+          onmouseleave={() => (hoveredPoint = null)}
         />
-        
+
         <!-- Visible dot -->
-        <circle 
-          cx={p.x} cy={p.y} r={hoveredPoint === p ? "5" : "3.5"} 
-          fill="var(--bg-color)" 
-          stroke={color} 
-          stroke-width="2" 
+        <circle
+          cx={p.x}
+          cy={p.y}
+          r={hoveredPoint === p ? "5" : "3.5"}
+          fill="var(--bg-color)"
+          stroke={color}
+          stroke-width="2"
           style="pointer-events: none; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
           opacity={hoveredPoint && hoveredPoint !== p ? "0.4" : "1"}
         />
@@ -113,7 +146,9 @@
     gap: 1.25rem;
     flex: 1;
     min-width: 340px;
-    transition: transform 0.2s, border-color 0.2s;
+    transition:
+      transform 0.2s,
+      border-color 0.2s;
   }
 
   .chart-container:hover {
@@ -143,8 +178,14 @@
   }
 
   @keyframes valueIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .chart-wrapper {
@@ -159,5 +200,7 @@
     overflow: visible;
   }
 
-  .hover-target { cursor: pointer; }
+  .hover-target {
+    cursor: pointer;
+  }
 </style>

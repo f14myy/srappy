@@ -1,8 +1,8 @@
 <script lang="ts" generics="T extends string">
-  import type { Component } from 'svelte';
+  import type { Component } from "svelte";
 
   type Props = {
-    options: { value: T, label?: string, icon?: any }[];
+    options: { value: T; label?: string; icon?: any }[];
     active: T;
     onchange: (val: T) => void;
   };
@@ -12,10 +12,10 @@
 
 <div class="segment-control">
   {#each options as opt}
-    <button 
-      type="button" 
-      class="segment-btn" 
-      class:active={active === opt.value} 
+    <button
+      type="button"
+      class="segment-btn"
+      class:active={active === opt.value}
       onclick={() => onchange(opt.value)}
     >
       {#if opt.icon}
@@ -49,7 +49,10 @@
     font-weight: 600;
     padding: 0.15rem 0.5rem;
     cursor: pointer;
-    transition: color 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition:
+      color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+      background 0.25s,
+      transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     font-family: inherit;
     letter-spacing: 0.02em;
     white-space: nowrap;

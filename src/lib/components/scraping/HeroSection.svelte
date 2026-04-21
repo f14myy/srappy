@@ -3,7 +3,15 @@
   import { quintOut } from "svelte/easing";
   import type { Translations } from "$lib/i18n";
   import type { ProgressEvent, ScrapeOptions, LogEvent } from "$lib/types";
-  import { Globe, Settings2, CheckCircle, AlertCircle, X, FolderOpen, BarChart3 } from "lucide-svelte";
+  import {
+    Globe,
+    Settings2,
+    CheckCircle,
+    AlertCircle,
+    X,
+    FolderOpen,
+    BarChart3,
+  } from "lucide-svelte";
   import OptionsPopover from "./options/OptionsPopover.svelte";
   import ProgressCard from "../results/ProgressCard.svelte";
   import TerminalLogs from "../results/TerminalLogs.svelte";
@@ -32,9 +40,26 @@
   };
 
   let {
-    url, isScraping, progress, progressLabel, errorMsg,
-    compact, liveStats, logs, recursive, maxDepth, maxPages, speed, options, tx,
-    onscrape, onurlchange, onoptions, onstop, onresume, onopenstats
+    url,
+    isScraping,
+    progress,
+    progressLabel,
+    errorMsg,
+    compact,
+    liveStats,
+    logs,
+    recursive,
+    maxDepth,
+    maxPages,
+    speed,
+    options,
+    tx,
+    onscrape,
+    onurlchange,
+    onoptions,
+    onstop,
+    onresume,
+    onopenstats,
   }: Props = $props();
 
   function trimUrl(u: string, max = 52) {
@@ -45,30 +70,53 @@
   const isDone = $derived(!isScraping && progress === 0 && progressLabel === "");
 
   let optionsOpen = $state(false);
-  function closeOptions() { optionsOpen = false; }
-  
-
+  function closeOptions() {
+    optionsOpen = false;
+  }
 </script>
 
 <section class="hero" class:compact class:options-open={optionsOpen && !isScraping}>
   <div class="hero-header-wrap">
     {#if !compact}
-      <div 
-        class="hero-titles" 
-        transition:slide={{ duration: 500, easing: quintOut }}
-      >
+      <div class="hero-titles" transition:slide={{ duration: 500, easing: quintOut }}>
         <div class="brand-mark">
-          <svg viewBox="0 0 24 24" width="36" height="36" fill="var(--accent)"><path d="M6 4l8 8-8 8h4l8-8-8-8zM13 4l8 8-8 8h4l8-8-8-8z" /></svg>
+          <svg viewBox="0 0 250 250" width="36" height="36" fill="var(--accent)">
+            <rect
+              x="60.9329"
+              y="35"
+              width="126.805"
+              height="25.361"
+              transform="rotate(45 60.9329 35)"
+            />
+            <rect
+              width="126.805"
+              height="25.361"
+              transform="matrix(-0.707107 0.707107 0.707107 0.707107 132.665 107.279)"
+            />
+            <rect
+              x="124.335"
+              y="35"
+              width="126.805"
+              height="25.361"
+              transform="rotate(45 124.335 35)"
+            />
+            <rect
+              width="126.805"
+              height="25.361"
+              transform="matrix(-0.707107 0.707107 0.707107 0.707107 196.067 107.279)"
+            />
+          </svg>
         </div>
         <h1>{tx.hero.title}</h1>
         <p class="subtitle">
-          {tx.hero.subtitle} <strong>{tx.hero.subtitleStrong}</strong> {tx.hero.subtitleEnd}
+          {tx.hero.subtitle} <strong>{tx.hero.subtitleStrong}</strong>
+          {tx.hero.subtitleEnd}
         </p>
       </div>
     {/if}
   </div>
 
-  <!-- URL form -->
+  <!-- форма ввода url -->
   <form class="action-bar" onsubmit={onscrape}>
     <div class="input-wrapper">
       <Globe size={13} class="input-globe" color="var(--text-muted)" />
@@ -83,20 +131,20 @@
         autocomplete="off"
         spellcheck={false}
       />
-      <button 
-        type="button" 
-        class="opt-btn" 
-        onclick={onopenstats} 
+      <button
+        type="button"
+        class="opt-btn"
+        onclick={onopenstats}
         disabled={isScraping}
         title={tx.stats.title}
       >
         <BarChart3 size={15} />
       </button>
-      <button 
-        type="button" 
-        class="opt-btn" 
+      <button
+        type="button"
+        class="opt-btn"
         class:active={optionsOpen}
-        onclick={() => optionsOpen = !optionsOpen} 
+        onclick={() => (optionsOpen = !optionsOpen)}
         title={tx.options.scrapingOptions}
       >
         <Settings2 size={15} />
@@ -111,27 +159,37 @@
       {/if}
     </button>
 
-  <!-- Scraping Options Popover -->
-  {#if optionsOpen && !isScraping}
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="popover-backdrop"
-      transition:fade={{ duration: 200 }}
-      onclick={closeOptions}
-    ></div>
-    <div class="popover-anim" transition:fade={{ duration: 220 }}>
-      <OptionsPopover {options} {tx} {onoptions} />
-    </div>
-  {/if}
+    {#if optionsOpen && !isScraping}
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="popover-backdrop"
+        transition:fade={{ duration: 200 }}
+        onclick={closeOptions}
+      ></div>
+      <div class="popover-anim" transition:fade={{ duration: 220 }}>
+        <OptionsPopover {options} {tx} {onoptions} />
+      </div>
+    {/if}
   </form>
 
-  <!-- Progress card (shown while scraping) -->
+  <!-- прогресс-бар и логи во время работы -->
   {#if isScraping || (progress > 0 && progress < 100)}
-    <ProgressCard {isScraping} {progress} {progressLabel} {recursive} {liveStats} {maxDepth} {maxPages} {speed} {tx} />
+    <ProgressCard
+      {isScraping}
+      {progress}
+      {progressLabel}
+      {recursive}
+      {liveStats}
+      {maxDepth}
+      {maxPages}
+      {speed}
+      {tx}
+    />
     {#if isScraping && recursive}
       <button type="button" class="stop-btn" onclick={onstop} title={tx.status.stop}>
-        <X size={14} /> {tx.status.stop}
+        <X size={14} />
+        {tx.status.stop}
       </button>
     {/if}
     <TerminalLogs {logs} />
@@ -154,7 +212,7 @@
 </section>
 
 <style>
-  /* ─── Layout ─────────────────────────────────────────────────────────────── */
+  /* анимация появления элементов */
   .hero {
     width: 100%;
     padding: 0 2rem;
@@ -165,7 +223,7 @@
     gap: 1.1rem;
     position: relative;
     z-index: 1;
-    transition: 
+    transition:
       padding 0.6s cubic-bezier(0.16, 1, 0.3, 1),
       gap 0.6s cubic-bezier(0.16, 1, 0.3, 1),
       transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
@@ -191,7 +249,6 @@
     overflow: hidden;
   }
 
-  /* Welcome mode — spacing handled by centering parent */
   .hero:not(.compact) {
     text-align: center;
     gap: 1rem;
@@ -269,7 +326,7 @@
     font-weight: 600;
   }
 
-  /* ─── Action bar ────────────────────────────────────────────────────────── */
+  /* поле ввода и кнопка запуска */
   .action-bar {
     display: flex;
     gap: 0.5rem;
@@ -308,12 +365,14 @@
     padding: 0 0.5rem 0 0.9rem;
     height: 42px;
     backdrop-filter: blur(12px);
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
   }
 
   .input-wrapper:focus-within {
     border-color: var(--text-muted);
-    box-shadow: 0 0 0 2px rgba(255,255,255,0.04);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.04);
   }
 
   .opt-btn {
@@ -330,8 +389,9 @@
     transition: all 0.2s;
   }
 
-  .opt-btn:hover, .opt-btn.active {
-    background: rgba(255,255,255,0.08);
+  .opt-btn:hover,
+  .opt-btn.active {
+    background: rgba(255, 255, 255, 0.08);
     color: var(--text-primary);
   }
 
@@ -383,10 +443,14 @@
     transform: translateY(0);
     transition-duration: 0.1s;
   }
-  .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-primary:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
 
   .spin-dot {
-    width: 7px; height: 7px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     border: 1.5px solid currentColor;
     border-top-color: transparent;
@@ -394,7 +458,11 @@
     flex-shrink: 0;
   }
 
-  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 
   .popover-backdrop {
     position: fixed;
@@ -417,7 +485,10 @@
     font-weight: 600;
     font-family: inherit;
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      border-color 0.15s,
+      color 0.15s;
   }
 
   .stop-btn:hover {
@@ -458,11 +529,7 @@
     inset: -8px -12px;
     border-radius: 12px;
     pointer-events: none;
-    background: radial-gradient(
-      circle at 50% 30%,
-      rgba(34, 197, 94, 0.28),
-      transparent 58%
-    );
+    background: radial-gradient(circle at 50% 30%, rgba(34, 197, 94, 0.28), transparent 58%);
     animation: doneFlash 1.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
@@ -530,5 +597,5 @@
   :global(html.reduce-motion) .btn-primary:active:not(:disabled) {
     transform: none;
   }
-
+  /* конец стилей */
 </style>

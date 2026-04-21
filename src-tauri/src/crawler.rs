@@ -7,15 +7,14 @@ use tauri::Emitter;
 use url::Url;
 
 use crate::error::ScrapeError;
-use crate::models::{PageResult, ScrapeOptions, ScrapeResult, CrawlState, ProgressEvent, LogEvent};
-use crate::fetcher::fetch_page;
 use crate::extractor::normalized_registrable_host;
+use crate::fetcher::fetch_page;
+use crate::models::{CrawlState, LogEvent, PageResult, ProgressEvent, ScrapeOptions, ScrapeResult};
 
 pub fn dedup_queue_by_min_depth(items: Vec<(String, usize)>) -> Vec<(String, usize)> {
     let mut best: HashMap<String, usize> = HashMap::new();
     for (url, d) in items {
-        best
-            .entry(url)
+        best.entry(url)
             .and_modify(|dd| *dd = (*dd).min(d))
             .or_insert(d);
     }
@@ -27,7 +26,9 @@ pub fn dedup_queue_by_min_depth(items: Vec<(String, usize)>) -> Vec<(String, usi
 pub async fn crawl(
     app: tauri::AppHandle,
     stop_flag: Arc<AtomicBool>,
-    active_browsers: Arc<std::sync::Mutex<std::collections::HashMap<u64, headless_chrome::Browser>>>,
+    active_browsers: Arc<
+        std::sync::Mutex<std::collections::HashMap<u64, headless_chrome::Browser>>,
+    >,
     browser_id_counter: Arc<std::sync::atomic::AtomicU64>,
     clients: Arc<Vec<Client>>,
     start_url: String,
@@ -38,11 +39,18 @@ pub async fn crawl(
     let max_depth = opts.max_depth;
     let max_pages = opts.max_pages;
 
-    let mut visited: HashSet<String> = initial_state.as_ref().map(|s| s.visited.clone()).unwrap_or_default();
+    let mut visited: HashSet<String> = initial_state
+        .as_ref()
+        .map(|s| s.visited.clone())
+        .unwrap_or_default();
     let mut visited_domains: HashSet<String> = HashSet::new();
-    let mut results: Vec<PageResult> = initial_state.as_ref().map(|s| s.results.clone()).unwrap_or_default();
-    
+    let mut results: Vec<PageResult> = initial_state
+        .as_ref()
+        .map(|s| s.results.clone())
+        .unwrap_or_default();
+
     if opts.unique_domains_only.unwrap_or(false) {
+        // если нужны только уникальные домены, заполняем список уже посещенных
         for res in &results {
             if let Ok(u) = Url::parse(&res.url) {
                 if let Some(host) = u.host_str() {
@@ -52,16 +60,23 @@ pub async fn crawl(
         }
     }
 
-    let pages_found = Arc::new(AtomicUsize::new(if results.is_empty() { 1 } else { results.len() }));
+    let pages_found = Arc::new(AtomicUsize::new(if results.is_empty() {
+        1
+    } else {
+        results.len()
+    }));
     let last_emit = Arc::new(std::sync::Mutex::new(Instant::now()));
     let emit_throttle = std::time::Duration::from_millis(50);
 
-    let mut current_level: Vec<(String, usize)> = initial_state.map(|s| s.current_level).unwrap_or_else(|| vec![(start_url, 0)]);
+    let mut current_level: Vec<(String, usize)> = initial_state
+        .map(|s| s.current_level)
+        .unwrap_or_else(|| vec![(start_url, 0)]);
 
     let mut is_stopped = false;
     let mut pages_failed = 0usize;
 
     'outer: while !current_level.is_empty() {
+        // проверяем, не пора ли закругляться
         if stop_flag.load(Ordering::SeqCst) {
             is_stopped = true;
             break 'outer;
@@ -81,6 +96,7 @@ pub async fn crawl(
                         if visited_domains.contains(&norm) {
                             continue;
                         }
+                        visited_domains.insert(norm);
                     }
                 }
             }
@@ -93,13 +109,6 @@ pub async fn crawl(
 
         for (url, _) in &to_scrape {
             visited.insert(url.clone());
-            if opts.unique_domains_only.unwrap_or(false) {
-                if let Ok(u) = Url::parse(url) {
-                    if let Some(host) = u.host_str() {
-                        visited_domains.insert(normalized_registrable_host(host));
-                    }
-                }
-            }
         }
 
         let depth = to_scrape.first().map(|(_, d)| *d).unwrap_or(0);
@@ -143,7 +152,8 @@ pub async fn crawl(
                         if stop_flag_clone.load(Ordering::SeqCst) {
                             return Err(ScrapeError::Other("Stopped".into()));
                         }
-                        tokio::time::sleep(std::time::Duration::from_millis(delay * (idx as u64))).await;
+                        tokio::time::sleep(std::time::Duration::from_millis(delay * (idx as u64)))
+                            .await;
                     }
                 }
 
@@ -152,16 +162,40 @@ pub async fn crawl(
                 }
 
                 let timer = std::time::Instant::now();
-                let res = fetch_page(&client, &url, &opts, stop_flag_clone, active_browsers_clone, browser_id_counter_clone).await;
+                let res = fetch_page(
+                    &client,
+                    &url,
+                    &opts,
+                    stop_flag_clone,
+                    active_browsers_clone,
+                    browser_id_counter_clone,
+                )
+                .await;
                 let elapsed = timer.elapsed().as_millis();
-                
+
                 match res {
                     Ok(r) => {
-                        let _ = app_clone.emit("scrape-log", LogEvent { url: url.clone(), status: "ok".into(), time_ms: elapsed, message: None });
+                        let _ = app_clone.emit(
+                            "scrape-log",
+                            LogEvent {
+                                url: url.clone(),
+                                status: "ok".into(),
+                                time_ms: elapsed,
+                                message: None,
+                            },
+                        );
                         Ok((r, d, url))
                     }
                     Err(e) => {
-                        let _ = app_clone.emit("scrape-log", LogEvent { url: url.clone(), status: "error".into(), time_ms: elapsed, message: Some(e.to_string()) });
+                        let _ = app_clone.emit(
+                            "scrape-log",
+                            LogEvent {
+                                url: url.clone(),
+                                status: "error".into(),
+                                time_ms: elapsed,
+                                message: Some(e.to_string()),
+                            },
+                        );
                         Err(e)
                     }
                 }
@@ -169,9 +203,11 @@ pub async fn crawl(
         }
 
         let mut next_level: Vec<(String, usize)> = Vec::new();
+        let mut next_level_domains: HashSet<String> = HashSet::new();
 
         loop {
             if stop_flag.load(Ordering::SeqCst) {
+                // отмена всех запущенных задач при остановке
                 join_set.abort_all();
                 is_stopped = true;
                 break 'outer;
@@ -196,10 +232,10 @@ pub async fn crawl(
                                         if let Ok(u_parsed) = Url::parse(&u_str) {
                                             if let Some(host) = u_parsed.host_str() {
                                                 let norm = normalized_registrable_host(host);
-                                                if visited_domains.contains(&norm) {
+                                                if visited_domains.contains(&norm) || next_level_domains.contains(&norm) {
                                                     continue;
                                                 }
-                                                visited_domains.insert(norm);
+                                                next_level_domains.insert(norm);
                                             }
                                         }
                                     }
@@ -273,6 +309,7 @@ pub async fn crawl(
     let pages_scraped = results.len();
 
     let crawl_state = if is_stopped {
+        // сохраняем состояние, чтобы потом можно было продолжить
         Some(CrawlState {
             current_level: current_level.clone(),
             visited: visited.clone(),

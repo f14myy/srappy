@@ -4,7 +4,11 @@
   import Toggle from "../../ui/Toggle.svelte";
   import Input from "../../ui/Input.svelte";
 
-  let { options, tx, onoptions }: { options: ScrapeOptions, tx: Translations, onoptions: (o: ScrapeOptions) => void } = $props();
+  let {
+    options,
+    tx,
+    onoptions,
+  }: { options: ScrapeOptions; tx: Translations; onoptions: (o: ScrapeOptions) => void } = $props();
 
   function toggle(key: keyof ScrapeOptions) {
     onoptions({ ...options, [key]: !options[key as keyof ScrapeOptions] });
@@ -22,24 +26,24 @@
 
   <div class="pop-slider-row has-tooltip" style="margin-top: 0; gap: 0.3rem;">
     <span style="font-size:0.75rem;">{tx.options.proxies}</span>
-    <Input 
-      type="textarea" 
-      style="height: 60px;" 
-      placeholder="http://123.45.67.89:8080" 
-      value={options.proxies} 
-      oninput={(v) => onoptions({...options, proxies: v})} 
+    <Input
+      type="textarea"
+      style="height: 60px;"
+      placeholder="http://123.45.67.89:8080"
+      value={options.proxies}
+      oninput={(v) => onoptions({ ...options, proxies: v })}
     />
     <div class="custom-tooltip">{tx.tooltips.ttProxies}</div>
   </div>
 
   <div class="pop-slider-row has-tooltip" style="margin-top: 0; gap: 0.3rem;">
     <span style="font-size:0.75rem;">{tx.options.userAgents}</span>
-    <Input 
-      type="textarea" 
-      style="height: 60px;" 
-      placeholder="Mozilla/5.0..." 
-      value={options.user_agents} 
-      oninput={(v) => onoptions({...options, user_agents: v})} 
+    <Input
+      type="textarea"
+      style="height: 60px;"
+      placeholder="Mozilla/5.0..."
+      value={options.user_agents}
+      oninput={(v) => onoptions({ ...options, user_agents: v })}
     />
     <div class="custom-tooltip">{tx.tooltips.ttUserAgents}</div>
   </div>
@@ -65,7 +69,9 @@
     width: 100%;
   }
 
-  .has-tooltip { position: relative; }
+  .has-tooltip {
+    position: relative;
+  }
   .custom-tooltip {
     display: block;
     position: absolute;
@@ -79,7 +85,7 @@
     font-size: 0.7rem;
     color: var(--text-primary);
     z-index: 100;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
     pointer-events: none;
     white-space: nowrap;
     opacity: 0;

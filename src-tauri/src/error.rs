@@ -1,6 +1,7 @@
 use serde::Serialize;
 
 #[derive(Debug, thiserror::Error, Serialize)]
+// наши кастомные ошибки для фронта
 pub enum ScrapeError {
     #[error("Network error: {0}")]
     Network(String),

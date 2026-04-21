@@ -1,18 +1,23 @@
+pub mod commands;
+pub mod crawler;
 pub mod error;
-pub mod models;
 pub mod extractor;
 pub mod fetcher;
-pub mod crawler;
-pub mod commands;
+pub mod models;
 
+use commands::*;
+use models::AppState;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use models::AppState;
-use commands::*;
-use tauri::{Manager, menu::{Menu, MenuItem}, tray::{TrayIconBuilder, TrayIconEvent}};
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::{TrayIconBuilder, TrayIconEvent},
+    Manager,
+};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // общее состояние приложения, флаги и браузеры
     let app_state = Arc::new(AppState {
         stop_flag: Arc::new(AtomicBool::new(false)),
         close_to_tray: Arc::new(AtomicBool::new(false)),
@@ -22,7 +27,10 @@ pub fn run() {
 
     tauri::Builder::default()
         .manage(app_state)
-        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, Some(vec!["--minimized"])))
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--minimized"]),
+        ))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
@@ -31,11 +39,13 @@ pub fn run() {
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
 
+            // настраиваем трей
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "show" => {
+                        // возвращаем окно из небытия
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.show();
                             let _ = window.set_focus();
@@ -63,6 +73,7 @@ pub fn run() {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let state = window.state::<Arc<AppState>>();
                 if state.close_to_tray.load(Ordering::SeqCst) {
+                    // вместо закрытия просто прячем в трей
                     api.prevent_close();
                     let _ = window.hide();
                 }

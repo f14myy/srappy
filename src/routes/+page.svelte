@@ -8,11 +8,23 @@
   import { quintOut, expoOut } from "svelte/easing";
   import { flip } from "svelte/animate";
 
-  import { loadAppPreferences, saveAppPreferences, loadWindowBounds, saveWindowBounds, type AppPreferences } from "$lib/appPreferences";
+  import {
+    loadAppPreferences,
+    saveAppPreferences,
+    loadWindowBounds,
+    saveWindowBounds,
+    type AppPreferences,
+  } from "$lib/appPreferences";
   import { loadScrapeOptions, saveScrapeOptions } from "$lib/scrapePreferences";
   import { i18n } from "$lib/i18n";
   import { applyTheme } from "$lib/themes";
-  import type { ScrapeResult, ScrapeOptions, ProgressEvent, LogEvent, ScrapeSession } from "$lib/types";
+  import type {
+    ScrapeResult,
+    ScrapeOptions,
+    ProgressEvent,
+    LogEvent,
+    ScrapeSession,
+  } from "$lib/types";
 
   import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
   import TopBar from "$lib/components/layout/TopBar.svelte";
@@ -22,7 +34,7 @@
   import StatsScreen from "$lib/components/stats/StatsScreen.svelte";
   import { saveToHistory } from "$lib/historyStore";
 
-  const APP_VERSION = "1.1";
+  const APP_VERSION = "1.2";
 
   const [send, receive] = crossfade({
     duration: (d) => Math.sqrt(d * 200) + 150,
@@ -36,9 +48,9 @@
         css: (t) => `
           transform: ${transform} scale(${0.9 + t * 0.1});
           opacity: ${t}
-        `
+        `,
       };
-    }
+    },
   });
 
   function parentDir(filePath: string): string {
@@ -105,11 +117,11 @@
     // Sanitize pattern and host to avoid illegal filename characters
     const cleanPattern = pattern.replace(/[<>:"/\\|?*]/g, "_");
     const cleanHost = host.replace(/[<>:"/\\|?*]/g, "_");
-    
+
     return cleanPattern.replace("{timestamp}", timestamp).replace("{host}", cleanHost) + "." + ext;
   }
 
-  // ─── State ───────────────────────────────────────────────────────────────────
+  // настройки, состояние поиска и сессий
   let prefs = $state(loadAppPreferences());
   let url = $state("");
   let isScraping = $state(false);
@@ -117,7 +129,7 @@
   let progressLabel = $state("");
   let settingsOpen = $state(false);
   let statsOpen = $state(false);
-  // SESSION STATE
+
   let activeSession = $state<ScrapeSession | null>(null);
   let minimizedSessions = $state<ScrapeSession[]>([]);
   let errorMsg = $state("");
@@ -125,15 +137,15 @@
   let scrapeStartTime = $state<number | null>(null);
   let speed = $state(0); // pages/sec
   let logs = $state<LogEvent[]>([]);
+  let errorLogs = $state<LogEvent[]>([]);
+  let activeLogs = $state<LogEvent[]>([]);
   let speedHistory = $state<number[]>([]);
   let speedHistoryTimer: ReturnType<typeof setInterval> | null = null;
 
-  /** Snapshot for progress events (listen handler must read current crawl limits). */
   let progressRun = $state({ recursive: false, maxPages: 10 });
 
   let scrapeOptions = $state<ScrapeOptions>(loadScrapeOptions());
 
-  // ─── Derived ─────────────────────────────────────────────────────────────────
   const tx = $derived(i18n[prefs.lang]);
 
   $effect(() => {
@@ -151,9 +163,11 @@
     if (logs.length > cap) {
       logs = logs.slice(-cap);
     }
+    if (errorLogs.length > cap) {
+      errorLogs = errorLogs.slice(-cap);
+    }
   });
 
-  // ─── Speed calculation ───────────────────────────────────────────────────────
   $effect(() => {
     if (liveStats && scrapeStartTime && liveStats.pages_done > 0) {
       const elapsed = (Date.now() - scrapeStartTime) / 1000;
@@ -161,13 +175,14 @@
     }
   });
 
-  // ─── Progress events ─────────────────────────────────────────────────────────
   let progressTimer: ReturnType<typeof setInterval> | null = null;
 
   let unlistenProgress: (() => void) | null = null;
   listen<ProgressEvent>("scrape-progress", (e) => {
     liveStats = e.payload;
-  }).then((fn) => { unlistenProgress = fn; });
+  }).then((fn) => {
+    unlistenProgress = fn;
+  });
 
   let unlistenLog: (() => void) | null = null;
   let logQueue: LogEvent[] = [];
@@ -176,19 +191,32 @@
   listen<LogEvent>("scrape-log", (e) => {
     logQueue.push(e.payload);
     if (!logBatchTimer) {
+      // пакуем логи в пачки, чтобы не дергать реакт по сто раз в секунду
       logBatchTimer = setInterval(() => {
         if (logQueue.length > 0) {
           const cap = prefs.logMaxLines;
+          const errors: LogEvent[] = logQueue
+            .filter((l) => l.status === "error")
+            .map((l) => ({
+              ...l,
+              status: "error" as const,
+              message: `${new Date().toLocaleTimeString()} · ${l.message || "Unknown error"}`,
+            }));
+          if (errors.length > 0) {
+            errorLogs = [...errorLogs, ...errors].slice(-cap);
+          }
           logs = [...logs, ...logQueue].slice(-cap);
           logQueue = [];
         }
       }, 150);
     }
-  }).then((fn) => { unlistenLog = fn; });
+  }).then((fn) => {
+    unlistenLog = fn;
+  });
 
-  onDestroy(() => { 
-    unlistenProgress?.(); 
-    unlistenLog?.(); 
+  onDestroy(() => {
+    unlistenProgress?.();
+    unlistenLog?.();
     if (logBatchTimer) clearInterval(logBatchTimer);
   });
 
@@ -199,7 +227,8 @@
 
     void (async () => {
       try {
-        const { getCurrentWindow, PhysicalPosition, PhysicalSize } = await import("@tauri-apps/api/window");
+        const { getCurrentWindow, PhysicalPosition, PhysicalSize } =
+          await import("@tauri-apps/api/window");
         const win = getCurrentWindow();
         if (prefs.rememberWindow) {
           const b = loadWindowBounds();
@@ -236,10 +265,10 @@
             prefs = { ...prefs, lastExportDir: dir };
           }
         }
-        
+
         // Sync preferences with backend
         await invoke("set_close_to_tray", { enabled: prefs.closeToTray });
-        
+
         const { isEnabled, enable, disable } = await import("@tauri-apps/plugin-autostart");
         const autostartEnabled = await isEnabled();
         if (prefs.startOnBoot !== autostartEnabled) {
@@ -304,21 +333,23 @@
     if (speedHistoryTimer) clearInterval(speedHistoryTimer);
     progressLabel = success ? tx.status.done : tx.status.error;
     if (success) progress = 100;
-    setTimeout(() => { progress = 0; progressLabel = ""; }, 800);
+    setTimeout(() => {
+      progress = 0;
+      progressLabel = "";
+    }, 800);
   }
 
-  // ─── Scrape ──────────────────────────────────────────────────────────────────
   async function scrape(e: Event) {
     e.preventDefault();
     if (!url) return;
     isScraping = true;
     errorMsg = "";
-    
-    // If there was an active session, minimize it first
+
+    // если есть активная сессия, скромно сворачиваем её
     if (activeSession) {
       minimizeSession(activeSession);
     }
-    
+
     activeSession = null;
     liveStats = null;
     progress = 0;
@@ -335,7 +366,7 @@
       if (scrapeStartTime && res.pages_scraped > 1) {
         finalSpeed = res.pages_scraped / ((Date.now() - scrapeStartTime) / 1000);
       }
-      
+
       activeSession = {
         id: Math.random().toString(36).substring(2, 9),
         result: res,
@@ -343,26 +374,30 @@
         options: { ...scrapeOptions },
         speed: finalSpeed,
         speedHistory: [...speedHistory],
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
       saveToHistory(activeSession);
 
       finishProgress(true);
       if (activeSession) {
         await notifyScrapeDone(activeSession.result.pages_scraped);
-        
-        // AUTO-SAVE SESSION
+
+        // автосохранение, если юзер не против
         if (prefs.autoSaveSessions) {
           try {
             const dir = prefs.lastExportDir || (await invoke<string>("get_app_dir"));
             const fname = resolveFilename(prefs.filenamePattern, url, "srappy");
             const path = dir + "/" + fname;
-            const content = JSON.stringify({
-              url: activeSession.url,
-              options: activeSession.options,
-              state: res.crawl_state,
-              pages: res.pages,
-            }, null, 2);
+            const content = JSON.stringify(
+              {
+                url: activeSession.url,
+                options: activeSession.options,
+                state: res.crawl_state,
+                pages: res.pages,
+              },
+              null,
+              2,
+            );
             await invoke("save_text", { text: content, path });
           } catch (e) {
             console.error("Auto-save failed", e);
@@ -371,6 +406,11 @@
       }
     } catch (err) {
       errorMsg = String(err);
+      const ts = new Date().toLocaleTimeString();
+      errorLogs = [
+        ...errorLogs,
+        { url, status: "error" as const, time_ms: 0, message: `${ts} · ${errorMsg}` },
+      ].slice(-prefs.logMaxLines);
       finishProgress(false);
     } finally {
       isScraping = false;
@@ -388,10 +428,12 @@
   async function resumeFromSession() {
     try {
       const selected = await open({
-        filters: [{
-          name: "Srappy Session",
-          extensions: ["srappy"]
-        }]
+        filters: [
+          {
+            name: "Srappy Session",
+            extensions: ["srappy"],
+          },
+        ],
       });
 
       if (!selected) return;
@@ -409,10 +451,10 @@
       };
       isScraping = true;
       errorMsg = "";
-      
+
       if (activeSession) minimizeSession(activeSession);
       activeSession = null;
-      
+
       scrapeStartTime = Date.now();
       startProgress();
 
@@ -427,7 +469,7 @@
       if (scrapeStartTime && res.pages_scraped > 1) {
         finalSpeed = res.pages_scraped / ((Date.now() - scrapeStartTime) / 1000);
       }
-      
+
       activeSession = {
         id: Math.random().toString(36).substring(2, 9),
         result: res,
@@ -435,7 +477,7 @@
         options: { ...scrapeOptions },
         speed: finalSpeed,
         speedHistory: [...speedHistory],
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
       saveToHistory(activeSession);
 
@@ -443,6 +485,16 @@
       if (activeSession) await notifyScrapeDone(activeSession.result.pages_scraped);
     } catch (err) {
       errorMsg = String(err);
+      const ts = new Date().toLocaleTimeString();
+      errorLogs = [
+        ...errorLogs,
+        {
+          url: url || "Session Resume",
+          status: "error" as const,
+          time_ms: 0,
+          message: `${ts} · ${errorMsg}`,
+        },
+      ].slice(-prefs.logMaxLines);
       finishProgress(false);
     } finally {
       isScraping = false;
@@ -453,7 +505,7 @@
     if (activeSession?.id === session.id) {
       activeSession = null;
     }
-    if (!minimizedSessions.find(s => s.id === session.id)) {
+    if (!minimizedSessions.find((s) => s.id === session.id)) {
       minimizedSessions = [session, ...minimizedSessions].slice(0, 10);
     }
   }
@@ -463,58 +515,73 @@
       minimizeSession(activeSession);
     }
     activeSession = session;
-    minimizedSessions = minimizedSessions.filter(s => s.id !== session.id);
+    minimizedSessions = minimizedSessions.filter((s) => s.id !== session.id);
     url = session.url;
     scrapeOptions = { ...session.options };
   }
 
   function deleteSession(id: string) {
-    minimizedSessions = minimizedSessions.filter(s => s.id !== id);
+    minimizedSessions = minimizedSessions.filter((s) => s.id !== id);
     if (activeSession?.id === id) activeSession = null;
   }
 
-  // ─── Export ──────────────────────────────────────────────────────────────────
+  function reorderSessions(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex) return;
+    const items = [...minimizedSessions];
+    const [moved] = items.splice(fromIndex, 1);
+    items.splice(toIndex, 0, moved);
+    minimizedSessions = items;
+  }
+
   type ExportFormat = "txt" | "json" | "csv" | "csv_meta" | "md" | "srappy";
 
   function getExportContent(format: ExportFormat, session: ScrapeSession) {
     const result = session.result;
     if (format === "txt") {
-      return result.pages_scraped > 1 
-        ? result.pages.map(p => `=== ${p.url} ===\n\n${p.text}`).join("\n\n\n")
-        : result.pages[0]?.text ?? "";
+      return result.pages_scraped > 1
+        ? result.pages.map((p) => `=== ${p.url} ===\n\n${p.text}`).join("\n\n\n")
+        : (result.pages[0]?.text ?? "");
     } else if (format === "json") {
       return JSON.stringify(result.pages, null, 2);
     } else if (format === "csv") {
       const escape = (s: string) => `"${s.replace(/"/g, '""')}"`;
       let content = "URL,Target,LoadTimeMs,SizeBytes,Text\n";
-      content += result.pages.map(p => {
-        return `${escape(p.url)},${escape("Body")},${p.load_time_ms},${p.size_bytes},${escape(p.text)}`;
-      }).join("\n");
+      content += result.pages
+        .map((p) => {
+          return `${escape(p.url)},${escape("Body")},${p.load_time_ms},${p.size_bytes},${escape(p.text)}`;
+        })
+        .join("\n");
       return content;
     } else if (format === "csv_meta") {
       const escape = (s: string) => `"${s.replace(/"/g, '""')}"`;
       let content = "URL,CharCount,LoadTimeMs,SizeBytes\n";
-      content += result.pages.map(p => {
-        return `${escape(p.url)},${p.char_count},${p.load_time_ms},${p.size_bytes}`;
-      }).join("\n");
+      content += result.pages
+        .map((p) => {
+          return `${escape(p.url)},${p.char_count},${p.load_time_ms},${p.size_bytes}`;
+        })
+        .join("\n");
       return content;
     } else if (format === "md") {
-      return result.pages.map(p => `## [${p.url}](${p.url})\n\n${p.text}`).join("\n\n---\n\n");
+      return result.pages.map((p) => `## [${p.url}](${p.url})\n\n${p.text}`).join("\n\n---\n\n");
     } else if (format === "srappy") {
-      return JSON.stringify({
-        url: session.url,
-        options: session.options,
-        state: result.crawl_state,
-        pages: result.pages
-      }, null, 2);
+      return JSON.stringify(
+        {
+          url: session.url,
+          options: session.options,
+          state: result.crawl_state,
+          pages: result.pages,
+        },
+        null,
+        2,
+      );
     }
     return "";
   }
 
   async function exportData(format: ExportFormat) {
     if (!activeSession) return;
-    
-    const extMap: Record<ExportFormat, { name: string, ext: string }> = {
+
+    const extMap: Record<ExportFormat, { name: string; ext: string }> = {
       txt: { name: "Text Document", ext: "txt" },
       json: { name: "JSON File", ext: "json" },
       csv: { name: "CSV File", ext: "csv" },
@@ -554,9 +621,11 @@
   {prefs}
   {tx}
   appVersion={APP_VERSION}
+  {errorLogs}
   onclose={() => (settingsOpen = false)}
   onpatch={patchPrefs}
   onerror={(m) => (errorMsg = m)}
+  onclearlogs={() => (errorLogs = [])}
 />
 
 {#if statsOpen}
@@ -567,7 +636,11 @@
   <div class="grid-bg" class:interactive={prefs.interactiveGrid}></div>
   <TopBar {settingsOpen} {tx} onopensettings={() => (settingsOpen = !settingsOpen)} />
 
-  <div class="main-area scroll-themed" class:has-result={activeSession !== null} class:has-tabs={minimizedSessions.length > 0}>
+  <div
+    class="main-area scroll-themed"
+    class:has-result={activeSession !== null}
+    class:has-tabs={minimizedSessions.length > 0}
+  >
     <div class="flex-spacer" class:shrunk={isScraping || activeSession !== null}></div>
     <HeroSection
       {url}
@@ -594,7 +667,7 @@
 
     {#if activeSession}
       {@const sid = activeSession.id}
-      <div 
+      <div
         class="result-container"
         in:fly={{ y: 600, duration: 800, easing: expoOut }}
         out:fly={{ y: 1000, duration: 700, easing: expoOut }}
@@ -615,27 +688,28 @@
         />
       </div>
     {/if}
-    <div class="flex-spacer" class:shrunk={isScraping || activeSession !== null || minimizedSessions.length > 0}></div>
+    <div class="flex-spacer" class:shrunk={isScraping || activeSession !== null}></div>
   </div>
 
   <!-- Minimized sessions stack -->
   {#if minimizedSessions.length > 0}
     <div class="sessions-stack">
       {#each minimizedSessions as session, i (session.id)}
-        <div 
-          animate:flip={{ duration: 400, easing: expoOut }} 
+        <div
+          animate:flip={{ duration: 400, easing: expoOut }}
           in:fly={{ y: 200, duration: 600, easing: expoOut }}
           out:fly={{ y: 200, duration: 400, easing: expoOut }}
           style="width: 100%; pointer-events: none;"
         >
-          <SessionBar 
-            {session} 
-            {tx} 
-            index={i} 
+          <SessionBar
+            {session}
+            {tx}
+            index={i}
             {send}
             {receive}
-            onrestore={() => restoreSession(session)} 
-            ondelete={() => deleteSession(session.id)} 
+            onrestore={() => restoreSession(session)}
+            ondelete={() => deleteSession(session.id)}
+            onreorder={reorderSessions}
           />
         </div>
       {/each}
@@ -657,8 +731,19 @@
     --scrollbar-thumb: rgba(255, 255, 255, 0.22);
     --ui-scale: 1;
     --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-    font-family: "Inter", -apple-system, sans-serif;
+    font-family:
+      "Inter",
+      -apple-system,
+      sans-serif;
     font-size: calc(14px * var(--ui-scale));
+  }
+
+  :global(.reduce-motion *),
+  :global(.reduce-motion *::before),
+  :global(.reduce-motion *::after) {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -707,12 +792,16 @@
     -webkit-user-select: none;
   }
 
-  :global(input), :global(textarea), :global(pre), :global(code), :global([contenteditable="true"]) {
+  :global(input),
+  :global(textarea),
+  :global(pre),
+  :global(code),
+  :global([contenteditable="true"]) {
     user-select: text !important;
     -webkit-user-select: text !important;
   }
 
-  /* ─── Outer shell ───────────────────────────────────────────────────────── */
+  /* контейнер всего приложения */
   .app {
     height: 100vh;
     display: flex;
@@ -731,7 +820,7 @@
     transform: scale(0.98);
   }
 
-  /* ─── Grid background ───────────────────────────────────────────────────── */
+  /* фон с сеткой */
   .grid-bg {
     position: fixed;
     inset: 0;
@@ -756,12 +845,19 @@
     background-position: calc(0px + 2px) calc(0px + 2px); /* Subtle shift for 'bend' effect */
     opacity: 0;
     transition: opacity 1s var(--ease-out-expo);
-    mask-image: radial-gradient(circle at var(--m-x, 50%) var(--m-y, 50%), black 0%, transparent 25%);
-    -webkit-mask-image: radial-gradient(circle at var(--m-x, 50%) var(--m-y, 50%), black 0%, transparent 25%);
+    mask-image: radial-gradient(
+      circle at var(--m-x, 50%) var(--m-y, 50%),
+      black 0%,
+      transparent 25%
+    );
+    -webkit-mask-image: radial-gradient(
+      circle at var(--m-x, 50%) var(--m-y, 50%),
+      black 0%,
+      transparent 25%
+    );
     pointer-events: none;
   }
 
-  /* Grid drift animation needs to be synced between layers */
   .grid-bg.interactive::after {
     animation: gridDrift 28s linear infinite;
     animation-delay: -0.1s; /* Slight offset in animation time also creates movement */
@@ -773,10 +869,14 @@
 
   @keyframes gridDrift {
     0% {
-      background-position: 0 0, 0 0;
+      background-position:
+        0 0,
+        0 0;
     }
     100% {
-      background-position: 52px 52px, 52px 52px;
+      background-position:
+        52px 52px,
+        52px 52px;
     }
   }
 
@@ -784,13 +884,12 @@
     animation: none;
   }
 
-  /* ─── TopBar sits outside main-area so it stays at top ─────────────────── */
   :global(.topbar) {
     flex-shrink: 0;
     z-index: 100; /* Ensure on top */
   }
 
-  /* ─── Sessions Stack ─────────────────────────────────────────────────────── */
+  /* стопка свернутых сессий */
   .sessions-stack {
     position: fixed;
     bottom: 1rem;
@@ -806,14 +905,13 @@
     padding: 0 1rem;
   }
 
-  /* Each bar is individual, so we don't need much here, but let's add spacing */
   .sessions-stack :global(.session-bar) {
     pointer-events: auto;
     /* Stack effect for bars further up the list? */
     /* opacity: calc(1 - var(--index) * 0.1); */
   }
 
-  /* ─── Main area ─────────────────────────────────────────────────────────── */
+  /* контентная область */
   .main-area {
     flex: 1;
     width: 100%;
@@ -826,16 +924,15 @@
   }
 
   .flex-spacer {
-    flex-grow: 1;
+    flex-grow: 20;
     transition: flex-grow 0.7s cubic-bezier(0.16, 1, 0.3, 1);
     min-height: 0;
   }
 
   .flex-spacer.shrunk {
-    flex-grow: 0.0001;
+    flex-grow: 0;
   }
 
-  /* When result is shown: anchor to top but stay within flex bounds */
   .main-area.has-result {
     overflow-x: hidden;
     overflow-y: auto;
@@ -843,7 +940,7 @@
   }
 
   .main-area.has-tabs {
-    padding-bottom: 5rem; /* Space for bars only if they exist */
+    padding-bottom: 5rem;
   }
 
   .result-container {
@@ -854,3 +951,4 @@
     min-height: 0;
   }
 </style>
+

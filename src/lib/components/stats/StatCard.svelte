@@ -13,7 +13,10 @@
 </script>
 
 <div class="stat-card" style="--card-color: {color}">
-  <div class="card-icon" style="color: {color}; background: color-mix(in srgb, {color} 12%, transparent);">
+  <div
+    class="card-icon"
+    style="color: {color}; background: color-mix(in srgb, {color} 12%, transparent);"
+  >
     <Icon size={18} />
   </div>
   <div class="card-content">
@@ -37,7 +40,7 @@
     align-items: center;
     gap: 1.25rem;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     min-height: 90px;
   }
 
@@ -45,7 +48,7 @@
     transform: translateY(-3px);
     border-color: var(--card-color);
     background: rgba(255, 255, 255, 0.04);
-    box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
   }
 
   .card-icon {
@@ -58,7 +61,7 @@
     flex-shrink: 0;
     transition: transform 0.3s var(--ease-out-expo);
   }
-  
+
   .stat-card:hover .card-icon {
     transform: scale(1.1);
   }
@@ -96,6 +99,10 @@
     font-size: 0.7rem;
     font-weight: 700;
   }
-  .card-trend.up { color: #4ade80; }
-  .card-trend.down { color: #f87171; }
+  .card-trend.up {
+    color: #4ade80;
+  }
+  .card-trend.down {
+    color: #f87171;
+  }
 </style>

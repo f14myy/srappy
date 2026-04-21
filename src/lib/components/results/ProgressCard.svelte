@@ -5,8 +5,16 @@
   import { fly } from "svelte/transition";
   import { expoOut } from "svelte/easing";
 
-  let { 
-    isScraping, progress, progressLabel, recursive, liveStats, maxDepth, maxPages, speed, tx 
+  let {
+    isScraping,
+    progress,
+    progressLabel,
+    recursive,
+    liveStats,
+    maxDepth,
+    maxPages,
+    speed,
+    tx,
   }: {
     isScraping: boolean;
     progress: number;
@@ -45,8 +53,8 @@
 </script>
 
 {#if isScraping || (progress > 0 && progress < 100)}
-  <div 
-    class="progress-card" 
+  <div
+    class="progress-card"
     class:recursive-mode={recursive}
     transition:fly={{ y: -15, duration: 400, easing: expoOut }}
   >
@@ -63,7 +71,9 @@
           <Zap size={11} />
           {liveStats.pages_done} / {liveStats.total_pages}
           {#if liveStats.pages_failed > 0}
-            <span class="fail-count" title="Failed pages">({liveStats.pages_failed} {tx.results.pagesFailed || 'failed'})</span>
+            <span class="fail-count" title="Failed pages"
+              >({liveStats.pages_failed} {tx.results.pagesFailed || "failed"})</span
+            >
           {/if}
           <span class="badge-muted">· {liveStats.pages_found} {tx.results.pages}</span>
         </div>
@@ -100,12 +110,14 @@
       <div class="meta-row">
         <span class="meta-chip">
           <Layers size={10} />
-          {tx.results.depth} {liveStats.depth}/{maxDepth}
+          {tx.results.depth}
+          {liveStats.depth}/{maxDepth}
         </span>
         {#if speed > 0}
           <span class="meta-chip">
             <Zap size={10} />
-            {speed.toFixed(1)} {tx.results.speed}
+            {speed.toFixed(1)}
+            {tx.results.speed}
           </span>
         {/if}
         <span class="meta-chip">
@@ -157,7 +169,8 @@
   }
 
   .pulse-dot {
-    width: 7px; height: 7px;
+    width: 7px;
+    height: 7px;
     background: var(--accent);
     border-radius: 50%;
     box-shadow: 0 0 0 0 var(--accent);
@@ -166,9 +179,15 @@
   }
 
   @keyframes pulse {
-    0%   { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
-    70%  { box-shadow: 0 0 0 5px rgba(255,255,255,0); }
-    100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+    0% {
+      box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 5px rgba(255, 255, 255, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
   }
 
   .prog-label {
@@ -300,7 +319,7 @@
     gap: 0.25rem;
     font-size: 0.7rem;
     color: var(--text-muted);
-    background: rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border-color);
     padding: 0.15rem 0.45rem;
     border-radius: 4px;

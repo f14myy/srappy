@@ -4,10 +4,12 @@ use std::sync::Arc;
 use std::time::Instant;
 use tauri::Emitter;
 
-use crate::error::ScrapeError;
-use crate::models::{PageResult, ScrapeOptions, ScrapeResult, CrawlState, ProgressEvent, LogEvent, AppState};
-use crate::fetcher::{fetch_page, build_clients};
 use crate::crawler::crawl;
+use crate::error::ScrapeError;
+use crate::fetcher::{build_clients, fetch_page};
+use crate::models::{
+    AppState, CrawlState, LogEvent, PageResult, ProgressEvent, ScrapeOptions, ScrapeResult,
+};
 
 #[tauri::command]
 pub async fn scrape_url(
@@ -17,6 +19,7 @@ pub async fn scrape_url(
     options: ScrapeOptions,
 ) -> Result<ScrapeResult, ScrapeError> {
     state.stop_flag.store(false, Ordering::SeqCst);
+    // засекаем время начала
     let timer = Instant::now();
     let clients = build_clients(&options)?;
 
@@ -40,7 +43,11 @@ pub async fn scrape_url(
                 current_url: url.clone(),
                 pages_done: 0,
                 pages_found: 1,
-                total_pages: if options.recursive { options.max_pages } else { 1 },
+                total_pages: if options.recursive {
+                    options.max_pages
+                } else {
+                    1
+                },
                 pages_failed: 0,
                 depth: 0,
             },
@@ -63,14 +70,30 @@ pub async fn scrape_url(
         )
         .await;
         let elapsed = t_start.elapsed().as_millis();
-        
+
         let (page, _) = match res {
             Ok(r) => {
-                let _ = app.emit("scrape-log", LogEvent { url: url.clone(), status: "ok".into(), time_ms: elapsed, message: None });
+                let _ = app.emit(
+                    "scrape-log",
+                    LogEvent {
+                        url: url.clone(),
+                        status: "ok".into(),
+                        time_ms: elapsed,
+                        message: None,
+                    },
+                );
                 r
             }
             Err(e) => {
-                let _ = app.emit("scrape-log", LogEvent { url: url.clone(), status: "error".into(), time_ms: elapsed, message: Some(e.to_string()) });
+                let _ = app.emit(
+                    "scrape-log",
+                    LogEvent {
+                        url: url.clone(),
+                        status: "error".into(),
+                        time_ms: elapsed,
+                        message: Some(e.to_string()),
+                    },
+                );
                 return Err(e);
             }
         };
@@ -104,6 +127,7 @@ pub async fn scrape_url(
 #[tauri::command]
 pub fn stop_scraping(state: tauri::State<'_, Arc<AppState>>) {
     state.stop_flag.store(true, Ordering::SeqCst);
+    // прибиваем все открытые браузеры (если были)
     if let Ok(mut browsers) = state.active_browsers.lock() {
         browsers.clear();
     }
@@ -119,6 +143,7 @@ pub async fn resume_scraping(
 ) -> Result<ScrapeResult, ScrapeError> {
     if crawl_state.results.is_empty() {
         if let Some(pages) = prior_pages.filter(|p| !p.is_empty()) {
+            // если прилетели старые данные, подсовываем их в новое состояние
             crawl_state.results = pages.clone();
             for p in pages {
                 crawl_state.visited.insert(p.url.clone());
@@ -167,7 +192,10 @@ pub fn read_text(path: String) -> Result<String, ScrapeError> {
 #[tauri::command]
 pub fn get_app_dir(app: tauri::AppHandle) -> Result<String, ScrapeError> {
     use tauri::Manager;
-    let mut path = app.path().document_dir().map_err(|e| ScrapeError::File(e.to_string()))?;
+    let mut path = app
+        .path()
+        .document_dir()
+        .map_err(|e| ScrapeError::File(e.to_string()))?;
     path.push("Srappy");
     if !path.exists() {
         fs::create_dir_all(&path).map_err(|e| ScrapeError::File(e.to_string()))?;

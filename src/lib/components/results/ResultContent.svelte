@@ -46,22 +46,27 @@
     if (!searchQuery.trim()) return escaped;
 
     try {
-      const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-      return escaped.replace(regex, '<mark>$1</mark>');
+      const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+      return escaped.replace(regex, "<mark>$1</mark>");
     } catch {
       return escaped;
     }
   });
 
   const filteredPages = $derived(
-    searchQuery.trim() 
-      ? result.pages.map((p, i) => ({ ...p, originalIndex: i }))
-          .filter(p => p.text.toLowerCase().includes(searchQuery.toLowerCase()) || p.url.toLowerCase().includes(searchQuery.toLowerCase()))
-      : result.pages.map((p, i) => ({ ...p, originalIndex: i }))
+    searchQuery.trim()
+      ? result.pages
+          .map((p, i) => ({ ...p, originalIndex: i }))
+          .filter(
+            (p) =>
+              p.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              p.url.toLowerCase().includes(searchQuery.toLowerCase()),
+          )
+      : result.pages.map((p, i) => ({ ...p, originalIndex: i })),
   );
 </script>
 
-{#if viewMode === 'text'}
+{#if viewMode === "text"}
   <div class="text-area scroll-themed">
     <pre><code>{@html highlightedText()}</code></pre>
   </div>
@@ -79,13 +84,13 @@
       </thead>
       <tbody>
         {#each filteredPages as p}
-           <tr tabindex="0" onclick={() => onselect(p.originalIndex)}>
-             <td class="muted">{p.originalIndex + 1}</td>
-             <td class="td-url" title={p.url}>{fmtUrl(p.url)}</td>
-             <td class="r-align">{fmtNum(p.char_count)}</td>
-             <td class="r-align">{fmtSize(p.size_bytes)}</td>
-             <td class="r-align">{fmtTime(p.load_time_ms)}</td>
-           </tr>
+          <tr tabindex="0" onclick={() => onselect(p.originalIndex)}>
+            <td class="muted">{p.originalIndex + 1}</td>
+            <td class="td-url" title={p.url}>{fmtUrl(p.url)}</td>
+            <td class="r-align">{fmtNum(p.char_count)}</td>
+            <td class="r-align">{fmtSize(p.size_bytes)}</td>
+            <td class="r-align">{fmtTime(p.load_time_ms)}</td>
+          </tr>
         {/each}
         {#if filteredPages.length === 0}
           <tr>
@@ -130,7 +135,7 @@
     border-radius: 2px;
     box-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
   }
-  
+
   .table-area {
     border: 1px solid var(--border-color);
     border-top: none;
@@ -153,13 +158,13 @@
       transform: translateY(0);
     }
   }
-  
+
   .data-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.76rem;
   }
-  
+
   .data-table th {
     text-align: left;
     padding: 0.5rem 1rem;
@@ -172,22 +177,22 @@
     backdrop-filter: blur(12px);
     z-index: 2;
   }
-  
+
   .data-table td {
     padding: 0.5rem 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     color: var(--text-primary);
   }
-  
+
   .data-table tr {
     cursor: pointer;
     transition: background 0.15s;
   }
-  
+
   .data-table tr:hover {
     background: rgba(255, 255, 255, 0.04);
   }
-  
+
   .data-table .td-url {
     font-family: ui-monospace, monospace;
     color: var(--accent);
@@ -197,9 +202,14 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  
-  .r-align { text-align: right; font-variant-numeric: tabular-nums; }
-  .muted { color: var(--text-muted); }
+
+  .r-align {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .muted {
+    color: var(--text-muted);
+  }
 
   :global(html.reduce-motion) .text-area,
   :global(html.reduce-motion) .table-area {
